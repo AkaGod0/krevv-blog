@@ -1,0 +1,8 @@
+/* eslint-disable @tailwindcss/no-custom-classname */
+/* @tailwindcss */
+@import "tailwindcss";
+
+/* You can add custom styles here if needed */
+body {
+  @apply bg-gradient-to-br from-blue-50 via-purple-100 to-pink-50 text-gray-800;
+}
