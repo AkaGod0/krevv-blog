@@ -4,8 +4,6 @@ import Footer from "../components/Footer";
 import CookieNotice from "../components/CookieNotice";
 import MaintenancePage from "../components/MaintenancePage"; 
 import { cookies } from "next/headers";
-import { useRouter } from "next/navigation";
-
 
 export const metadata = {
   title: {
@@ -70,10 +68,6 @@ export default async function RootLayout({
 }) {
   const cookieStore = await cookies();
   const maintenanceEnabled = cookieStore.get("maintenance")?.value === "true";
-   const router = useRouter();
-
-  // Define admin routes
-  const isAdminRoute = router.pathname.startsWith('/admin');
 
   return (
     <html lang="en">
@@ -82,7 +76,7 @@ export default async function RootLayout({
         <ConditionalNavbar />
 
         <main className="flex-1">
-          {maintenanceEnabled && !isAdminRoute ? (
+          {maintenanceEnabled ? (
             <MaintenancePage />
           ) : (
             <>

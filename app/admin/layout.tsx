@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { LogOut, Menu, X } from "lucide-react";
 import Cookies from "js-cookie";
