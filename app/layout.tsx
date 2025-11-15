@@ -4,6 +4,8 @@ import Footer from "../components/Footer";
 import CookieNotice from "../components/CookieNotice";
 import MaintenancePage from "../components/MaintenancePage"; 
 import { cookies } from "next/headers";
+import { useRouter } from "next/navigation";
+
 
 export const metadata = {
   title: {
@@ -80,7 +82,7 @@ export default async function RootLayout({
         <ConditionalNavbar />
 
         <main className="flex-1">
-          {maintenanceEnabled && isAdminRoute ? (
+          {maintenanceEnabled && !isAdminRoute ? (
             <MaintenancePage />
           ) : (
             <>

@@ -7,14 +7,19 @@ export function middleware(req: NextRequest) {
   const maintenance = req.cookies.get("maintenance")?.value === "true";
   const pathname = req.nextUrl.pathname;
 
-  // 🔐 ADMIN ROUTES
+  // 🔐 ALLOW ALL ADMIN ROUTES
   if (pathname.startsWith("/admin")) {
-    if (pathname === "/admin/login") return NextResponse.next();
+    // Allow admin login without token
+    if (pathname === "/admin/login") {
+      return NextResponse.next();
+    }
 
+    // Require token for admin pages
     if (!token) {
       return NextResponse.redirect(new URL("/admin/login", req.url));
     }
 
+    // Validate token
     try {
       jwt.verify(token, process.env.NEXT_PUBLIC_JWT_SECRET || "mysecret");
     } catch (err) {
@@ -23,18 +28,20 @@ export function middleware(req: NextRequest) {
       return res;
     }
 
-    return NextResponse.next(); // Admin bypasses maintenance
+    // 🚀 IMPORTANT: Admin bypasses maintenance
+    return NextResponse.next();
   }
 
-  // 🌐 PUBLIC PAGES
+  // 🌐 PUBLIC MAINTENANCE MODE
   if (maintenance && pathname !== "/maintenance") {
-    if (!pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL("/maintenance", req.url));
-    }
-  
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|.*\\..*).*)"], // all public pages
+  matcher: [
+    "/((?!api|_next|.*\\..*).*)",
+  ],
 };
