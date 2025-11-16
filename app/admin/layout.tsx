@@ -1,5 +1,6 @@
 "use client";
 
+
 import Link from "next/link";
 import { LogOut, Menu, X } from "lucide-react";
 import Cookies from "js-cookie";
@@ -8,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link href="/admin" className="hover:text-pink-400 transition">Home</Link>
               <Link href="/admin/create" className="hover:text-blue-400 transition">Create Post</Link>
               <Link href="/admin/manage" className="hover:text-green-400 transition">Manage Posts</Link>
+              <Link href="/admin/maintenance" className="hover:text-green-400 transition">maintenace</Link>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition"
@@ -82,6 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link href="/admin" className="w-full hover:text-pink-400" onClick={() => setIsOpen(false)}>Home</Link>
                 <Link href="/admin/create" className="w-full hover:text-blue-400" onClick={() => setIsOpen(false)}>Create Post</Link>
                 <Link href="/admin/manage" className="w-full hover:text-green-400" onClick={() => setIsOpen(false)}>Manage Posts</Link>
+                 <Link href="/admin/maintenance" className="w-full hover:text-green-400" onClick={() => setIsOpen(false)}>maintenance</Link>
                 <button
                   onClick={() => { handleLogout(); setIsOpen(false); }}
                   className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg w-full justify-center"
