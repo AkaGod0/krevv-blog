@@ -11,13 +11,13 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ManagePostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true); // ← Loading state
   const [message, setMessage] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 10;
   const router = useRouter(); 
-
 
   // ✅ Token check logic
   useEffect(() => {
@@ -28,18 +28,18 @@ export default function ManagePostsPage() {
     }
   }, [router]);
 
-const fetchPosts = async () => {
-  try {
-    const res = await fetch(`${API}/posts`);
-    const json = await res.json();
-    // Use json.data because your API wraps posts in a data object
-    setPosts(Array.isArray(json.data) ? json.data : []);
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-
+  const fetchPosts = async () => {
+    setLoading(true); // ← start loading
+    try {
+      const res = await fetch(`${API}/posts`);
+      const json = await res.json();
+      setPosts(Array.isArray(json.data) ? json.data : []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false); // ← stop loading
+    }
+  };
 
   useEffect(() => {
     fetchPosts();
@@ -98,70 +98,81 @@ const fetchPosts = async () => {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {currentPosts.map((post) => (
-          <motion.div
-            key={post._id}
-            whileHover={{ scale: 1.03 }}
-            transition={{ duration: 0.3 }}
-            className="bg-black/50 backdrop-blur-lg p-4 sm:p-6 rounded-2xl shadow-lg border border-purple-700/30 flex flex-col"
-          >
-            {post.image && (
-              <img
-                src={post.image}
-                alt={post.title}
-                className="w-full h-40 sm:h-48 object-cover rounded-xl mb-4"
-              />
-            )}
-  
+     {loading ? (
+  <div className="flex flex-col justify-center items-center py-20 space-y-4">
+    {/* Spinner */}
+    <div className="w-12 h-12 border-4 border-t-purple-500 border-b-pink-500 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
+    {/* Loading Text */}
+    <p className="text-xl sm:text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
+      Loading posts...
+    </p>
+  </div>
+) : (
 
-            <h3 className="text-2xl sm:text-4xl font-bold mb-2">{post.title}</h3>
-            <h3 className="text-xl sm:text-2xl font-bold mb-2">{post.slug}</h3>
-            <h3 className="text-xl sm:text-2xl font-bold mb-2">{post.category}</h3>
-          
-
-        
-            <div className="flex justify-between text-xs sm:text-sm text-gray-400 mb-4">
-              <span>❤️ {post.likes?.length || 0}</span>
-              <span>💬 {post.comments?.length || 0}</span>
-              <span>👁️ {post.views || 0}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-              <a
-                href={`/admin/edit/${post._id}`}
-                className="flex items-center justify-center gap-1 bg-blue-600 px-3 py-2 rounded-lg hover:opacity-80"
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {currentPosts.map((post) => (
+              <motion.div
+                key={post._id}
+                whileHover={{ scale: 1.03 }}
+                transition={{ duration: 0.3 }}
+                className="bg-black/50 backdrop-blur-lg p-4 sm:p-6 rounded-2xl shadow-lg border border-purple-700/30 flex flex-col"
               >
-                <Edit size={16} /> Edit
-              </a>
+                {post.image && (
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-40 sm:h-48 object-cover rounded-xl mb-4"
+                  />
+                )}
+
+                <h3 className="text-2xl sm:text-4xl font-bold mb-2">{post.title}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">{post.slug}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">{post.category}</h3>
+
+                <div className="flex justify-between text-xs sm:text-sm text-gray-400 mb-4">
+                  <span>❤️ {post.likes?.length || 0}</span>
+                  <span>💬 {post.comments?.length || 0}</span>
+                  <span>👁️ {post.views || 0}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <a
+                    href={`/admin/edit/${post._id}`}
+                    className="flex items-center justify-center gap-1 bg-blue-600 px-3 py-2 rounded-lg hover:opacity-80"
+                  >
+                    <Edit size={16} /> Edit
+                  </a>
+                  <button
+                    onClick={() => handleDeleteClick(post._id)}
+                    className="flex items-center justify-center gap-1 bg-red-600 px-3 py-2 rounded-lg hover:opacity-80"
+                  >
+                    <Trash size={16} /> Delete
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6 sm:mt-8">
+            {currentPage > 1 && (
               <button
-                onClick={() => handleDeleteClick(post._id)}
-                className="flex items-center justify-center gap-1 bg-red-600 px-3 py-2 rounded-lg hover:opacity-80"
+                onClick={handlePrevPage}
+                className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
               >
-                <Trash size={16} /> Delete
+                Prev
               </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6 sm:mt-8">
-        {currentPage > 1 && (
-          <button
-            onClick={handlePrevPage}
-            className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
-          >
-            Prev
-          </button>
-        )}
-        {indexOfLastPost < posts.length && (
-          <button
-            onClick={handleNextPage}
-            className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-          >
-            Next
-          </button>
-        )}
-      </div>
+            )}
+            {indexOfLastPost < posts.length && (
+              <button
+                onClick={handleNextPage}
+                className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                Next
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

@@ -14,28 +14,31 @@ export default function AdminHomePage() {
   });
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${API}/posts`);
-        const data = await res.json();
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(`${API}/posts`);
+      const data = await res.json();
 
-        const totalLikes = data.reduce((acc: number, post: any) => acc + (post.likes?.length || 0), 0);
-        const totalComments = data.reduce((acc: number, post: any) => acc + (post.comments?.length || 0), 0);
-        const totalViews = data.reduce((acc: number, post: any) => acc + (post.views || 0), 0); // ← Count views
+      const postsArray = Array.isArray(data.data) ? data.data : [];
 
-        setStats({
-          totalPosts: data.length,
-          totalLikes,
-          totalComments,
-          totalViews,
-        });
-      } catch (err) {
-        console.error("Failed to fetch stats:", err);
-      }
-    };
+      const totalLikes = postsArray.reduce((acc: number, post: any) => acc + (post.likes?.length || 0), 0);
+      const totalComments = postsArray.reduce((acc: number, post: any) => acc + (post.comments?.length || 0), 0);
+      const totalViews = postsArray.reduce((acc: number, post: any) => acc + (post.views || 0), 0);
 
-    fetchStats();
-  }, []);
+      setStats({
+        totalPosts: postsArray.length,
+        totalLikes,
+        totalComments,
+        totalViews,
+      });
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+    }
+  };
+
+  fetchStats();
+}, []);
+
 
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-8 min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white p-6">
