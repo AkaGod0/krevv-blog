@@ -3,30 +3,21 @@ import { MetadataRoute } from "next";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.krevv.com";
 
-  // Fetch all posts from your backend (optional)
+  // Fetch all posts from your backend
   let posts: any[] = [];
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts`);
     const data = await res.json();
-    posts = data.posts || [];
+    posts = Array.isArray(data.data) ? data.data : [];
   } catch (err) {
-    console.error("Failed to fetch posts for sitemap");
+    console.error("Failed to fetch posts for sitemap", err);
   }
 
   // Static pages
   const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: `${baseUrl}/`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-    },
+    { url: `${baseUrl}/`, lastModified: new Date() },
+    { url: `${baseUrl}/about`, lastModified: new Date() },
+    { url: `${baseUrl}/contact`, lastModified: new Date() },
   ];
 
   // Dynamic blog posts

@@ -28,15 +28,18 @@ export default function ManagePostsPage() {
     }
   }, [router]);
 
-  const fetchPosts = async () => {
-    try {
-      const res = await fetch(`${API}/posts`);
-      const data = await res.json();
-      setPosts(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchPosts = async () => {
+  try {
+    const res = await fetch(`${API}/posts`);
+    const json = await res.json();
+    // Use json.data because your API wraps posts in a data object
+    setPosts(Array.isArray(json.data) ? json.data : []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
 
   useEffect(() => {
     fetchPosts();
