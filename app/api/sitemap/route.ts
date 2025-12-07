@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
 
+// Mark this route as dynamic to avoid static pre-rendering
+export const dynamic = "force-dynamic";
+
 // MongoDB connection URI
 const uri = process.env.MONGODB_URI; // Add this to your .env file
 const dbName = process.env.MONGODB_DB; // Add your DB name
