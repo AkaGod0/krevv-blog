@@ -1,0 +1,40 @@
+/* app/styles/post-detail.css */
+
+.post-content-wrapper .prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.post-content-wrapper .prose thead {
+  background-color: #f3f4f6;
+}
+
+.post-content-wrapper .prose th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.post-content-wrapper .prose td {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .post-content-wrapper .prose th,
+  .post-content-wrapper .prose td {
+    min-width: 100px;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}

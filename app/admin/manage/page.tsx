@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Edit, Trash } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Edit, Trash, Search, Eye, Heart, MessageCircle, ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import Cookies from "js-cookie";
-import { isTokenExpired } from "../utils/checkToken";
 import { useRouter } from "next/navigation";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -28,19 +27,13 @@ export default function ManagePostsPage() {
 
   const router = useRouter();
 
-  // Token check
-  useEffect(() => {
-    const token = Cookies.get("token");
-    if (!token || isTokenExpired(token)) {
-      Cookies.remove("token");
-      router.push("/admin/login");
-    }
-  }, [router]);
-
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/posts?page=${page}&limit=${limit}`);
+      const token = Cookies.get("admin_token") || Cookies.get("token");
+      const res = await fetch(`${API}/posts?page=${page}&limit=${limit}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const json = await res.json();
       setPosts(Array.isArray(json.data) ? json.data : []);
       setTotal(json.total || 0);
@@ -63,14 +56,15 @@ export default function ManagePostsPage() {
   const confirmDelete = async () => {
     if (!postToDelete) return;
     try {
-      const token = Cookies.get("token");
+      const token = Cookies.get("admin_token") || Cookies.get("token");
       await fetch(`${API}/posts/${postToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
       setPosts(posts.filter((p) => p._id !== postToDelete));
-      setMessage("🗑️ Post deleted");
+      setMessage("Post deleted successfully!");
       setTimeout(() => setMessage(""), 3000);
+      fetchPosts();
     } catch (err) {
       console.error(err);
     } finally {
@@ -80,95 +74,94 @@ export default function ManagePostsPage() {
   };
 
   // Search posts
-  // Search posts — NOW SHOWS ALL MATCHING POSTS (not limited by pagination)
-// SEARCH — show ALL results that contain the text
-useEffect(() => {
-  if (!searchText.trim()) {
-    fetchPosts(); 
-    setSuggestions([]);
-    setShowSuggestions(false);
-    return;
-  }
-
-  const delay = setTimeout(async () => {
-    try {
-
-      // Fetch ALL posts that match the query (no limit)
-      const res = await fetch(
-        `${API}/posts/search?q=${encodeURIComponent(searchText.trim())}&all=true`
-      );
-
-      const json = await res.json();
-
-      let results: any[] = [];
-      if (Array.isArray(json)) results = json;
-      else if (json.posts) results = json.posts;
-      else if (json.results) results = json.results;
-      else if (json.data) results = json.data;
-
-      // CLIENT-SIDE FILTER: matches EXACT typed text anywhere in title
-      const exactMatches = results.filter((p) =>
-        p.title.toLowerCase().includes(searchText.toLowerCase())
-      );
-
-      // Show ALL matching posts in the manager list
-      setPosts(exactMatches);
-
-      // Show ALL in dropdown (not only 8)
-      setSuggestions(exactMatches);
-
-      setShowSuggestions(true);
-
-    } catch (err) {
-      console.error(err);
+  useEffect(() => {
+    if (!searchText.trim()) {
+      fetchPosts();
       setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
-  }, 300);
 
-  return () => clearTimeout(delay);
-}, [searchText]);
+    const delay = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${API}/posts/search?q=${encodeURIComponent(searchText.trim())}&all=true`
+        );
+        const json = await res.json();
 
+        let results: any[] = [];
+        if (Array.isArray(json)) results = json;
+        else if (json.posts) results = json.posts;
+        else if (json.results) results = json.results;
+        else if (json.data) results = json.data;
 
+        const exactMatches = results.filter((p) =>
+          p.title.toLowerCase().includes(searchText.toLowerCase())
+        );
+
+        setPosts(exactMatches);
+        setSuggestions(exactMatches);
+        setShowSuggestions(true);
+      } catch (err) {
+        console.error(err);
+        setSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [searchText]);
 
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-black via-blue-900 to-purple-900 text-white p-4 sm:p-10">
-      <h1 className="text-3xl sm:text-4xl font-extrabold mb-6 sm:mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-300">
-        Manage All Posts ✨
-      </h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-6 text-white"
+      >
+        <div className="flex items-center gap-3 mb-2">
+          <Edit size={32} />
+          <h1 className="text-3xl font-bold">Manage Posts</h1>
+        </div>
+        <p className="text-blue-100">
+          Edit, delete, and manage all your blog posts
+        </p>
+      </motion.div>
 
-      {/* SEARCH BAR */}
-      <div className="mb-6 relative max-w-xl mx-auto">
-        <input
-          type="text"
-          placeholder="Search posts..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          className="w-full border border-gray-300 p-3 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
-        />
+      {/* Search Bar */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search posts by title..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-800"
+          />
 
-        {showSuggestions && (
-          <div className="absolute inset-x-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
-            {suggestions.length > 0 ? (
-              suggestions.map((post) => (
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute inset-x-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto z-50">
+              {suggestions.map((post) => (
                 <div
-                  key={post._id || post.id}
+                  key={post._id}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    setPosts([post]); // display selected post
+                    setPosts([post]);
                     setSearchText(post.title);
                     setSuggestions([]);
                     setShowSuggestions(false);
                   }}
-                  className="flex items-center gap-4 px-4 py-3 hover:bg-amber-50 border-b border-gray-100 last:border-b-0 transition cursor-pointer"
+                  className="flex items-center gap-4 px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition cursor-pointer"
                 >
                   {post.image && (
                     <img
                       src={post.image}
                       alt={post.title}
-                      className="w-12 h-12 object-cover rounded-md flex-shrink-0"
+                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
                     />
                   )}
                   <div className="flex-1 min-w-0">
@@ -178,145 +171,178 @@ useEffect(() => {
                     </p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="p-4 text-center text-gray-500 text-sm">
-                No posts found starting with "<strong>{searchText}</strong>"
-              </div>
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* MESSAGE TOAST */}
-      {message && (
-        <motion.div
-          initial={{ opacity: 0, x: 50, y: 50 }}
-          animate={{ opacity: 1, x: 0, y: 0 }}
-          exit={{ opacity: 0, x: 50, y: 50 }}
-          className="fixed bottom-5 right-2 sm:right-5 bg-black/70 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base"
-        >
-          {message}
-        </motion.div>
-      )}
+      {/* Success Message */}
+      <AnimatePresence>
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3"
+          >
+            <AlertCircle className="text-green-600" size={20} />
+            <p className="text-green-700 font-medium">{message}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* POSTS GRID */}
+      {/* Posts Grid */}
       {loading ? (
-        <div className="flex flex-col justify-center items-center py-20 space-y-4">
-          <div className="w-12 h-12 border-4 border-t-purple-500 border-b-pink-500 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
-          <p className="text-xl sm:text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
-            Loading posts...
-          </p>
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <Loader2 className="animate-spin text-blue-600 w-12 h-12" />
+          <p className="text-xl font-semibold text-gray-600">Loading posts...</p>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="bg-white rounded-xl shadow p-12 text-center">
+          <AlertCircle className="mx-auto text-gray-400 mb-4" size={48} />
+          <p className="text-gray-600 text-lg">No posts found</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => (
               <motion.div
                 key={post._id}
-                whileHover={{ scale: 1.03 }}
-                transition={{ duration: 0.3 }}
-                className="bg-black/50 backdrop-blur-lg p-4 sm:p-6 rounded-2xl shadow-lg border border-purple-700/30 flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -5 }}
+                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition overflow-hidden"
               >
                 {post.image && (
                   <img
                     src={post.image}
                     alt={post.title}
-                    className="w-full h-40 sm:h-48 object-cover rounded-xl mb-4"
+                    className="w-full h-48 object-cover"
                   />
                 )}
-                <h3 className="text-2xl sm:text-4xl font-bold mb-2">{post.title}</h3>
-                <h3 className="text-xl sm:text-2xl font-bold mb-2">{post.slug}</h3>
-                <h3 className="text-xl sm:text-2xl font-bold mb-2">{post.category}</h3>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+                    {post.title}
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">
+                      {post.category || "General"}
+                    </span>
+                  </div>
 
-                <div className="flex justify-between text-xs sm:text-sm text-gray-400 mb-4">
-                  <span>❤️ {post.likes?.length || 0}</span>
-                  <span>💬 {post.comments?.length || 0}</span>
-                  <span>👁️ {post.views || 0}</span>
-                </div>
+                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                    <div className="flex items-center gap-1">
+                      <Eye size={14} />
+                      <span>{post.views || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Heart size={14} />
+                      <span>{post.likes?.length || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageCircle size={14} />
+                      <span>{post.comments?.length || 0}</span>
+                    </div>
+                  </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                  <a
-                    href={`/admin/edit/${post._id}`}
-                    className="flex items-center justify-center gap-1 bg-blue-600 px-3 py-2 rounded-lg hover:opacity-80"
-                  >
-                    <Edit size={16} /> Edit
-                  </a>
-
-                  <button
-                    onClick={() => handleDeleteClick(post._id)}
-                    className="flex items-center justify-center gap-1 bg-red-600 px-3 py-2 rounded-lg hover:opacity-80"
-                  >
-                    <Trash size={16} /> Delete
-                  </button>
+                  <div className="flex gap-2">
+                    <a
+                      href={`/admin/edit/${post._id}`}
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+                    >
+                      <Edit size={16} />
+                      Edit
+                    </a>
+                    <button
+                      onClick={() => handleDeleteClick(post._id)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition"
+                    >
+                      <Trash size={16} />
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* PAGINATION */}
-          <div className="flex justify-center gap-4 mt-10">
-            <button
-              disabled={page === 1}
-              onClick={() => {
-                setPage(page - 1);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`px-4 py-2 rounded-lg ${
-                page === 1 ? "bg-gray-700 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-              }`}
-            >
-              ← Prev
-            </button>
-            <span className="text-lg font-semibold">
-              Page {page} / {totalPages}
-            </span>
-            <button
-              disabled={page === totalPages}
-              onClick={() => {
-                setPage(page + 1);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`px-4 py-2 rounded-lg ${
-                page === totalPages ? "bg-gray-700 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-              }`}
-            >
-              Next →
-            </button>
-          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4">
+              <button
+                disabled={page === 1}
+                onClick={() => {
+                  setPage(page - 1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
+                  page === 1
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                <ChevronLeft size={18} />
+                Previous
+              </button>
+              
+              <span className="text-lg font-semibold text-gray-700">
+                Page {page} of {totalPages}
+              </span>
+              
+              <button
+                disabled={page === totalPages}
+                onClick={() => {
+                  setPage(page + 1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
+                  page === totalPages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                Next
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </>
       )}
 
-      {/* DELETE MODAL */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white text-black rounded-xl shadow-xl w-full max-w-sm sm:w-96 p-4 sm:p-6"
-          >
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Delete Post</h2>
-            <p className="text-gray-700 mb-4 sm:mb-6 text-sm sm:text-base">
-              Are you sure you want to delete this post? This action cannot be undone.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition text-sm sm:text-base"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-3 sm:px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-sm sm:text-base"
-              >
-                Delete
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </main>
+      {/* Delete Modal */}
+      <AnimatePresence>
+        {modalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"
+            >
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Delete Post</h2>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this post? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

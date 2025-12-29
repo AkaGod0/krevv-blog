@@ -4,14 +4,15 @@ import Footer from "../components/Footer";
 import CookieNotice from "../components/CookieNotice";
 import MaintenancePage from "../components/MaintenancePage"; 
 import { cookies } from "next/headers";
-
+import { AuthProvider } from "./context/AuthContext";
+import { AdminProvider } from "../app/admin/context/AdminContext"; // ✅ Add this
 
 export const metadata = {
   title: {
     default: "krevv — Guide Designed for Digital & Remote workers.",
     template: "%s | krevv",
   },
- icons: {
+  icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -82,24 +83,26 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-
-
       <body className="bg-cream text-gray-800 flex flex-col min-h-screen">
+        {/* ✅ Wrap with both AuthProvider and AdminProvider */}
+        <AuthProvider>
+          <AdminProvider>
+            <ConditionalNavbar />
 
-        <ConditionalNavbar />
+            <main className="flex-1">
+              {maintenanceEnabled ? (
+                <MaintenancePage />
+              ) : (
+                <>
+                  {children}
+                  <CookieNotice />
+                </>
+              )}
+            </main>
 
-        <main className="flex-1">
-          {maintenanceEnabled ? (
-            <MaintenancePage />
-          ) : (
-            <>
-              {children}
-              <CookieNotice />
-            </>
-          )}
-        </main>
-
-        <Footer />
+            <Footer />
+          </AdminProvider>
+        </AuthProvider>
       </body>
     </html>
   );

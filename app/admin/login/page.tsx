@@ -1,96 +1,138 @@
-'use client';
+"use client";
+
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
+import { motion } from "framer-motion";
+import { Shield, User, Lock, Loader2, AlertCircle } from "lucide-react";
+import { useAdmin } from "../context/AdminContext";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { login } = useAdmin();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Invalid username or password");
-        return;
-      }
-
-      // ✅ Store the token in a cookie
-      Cookies.set("token", data.token, { expires: 7 }); // expires in 7 days
-      // small delay before redirect (200–300ms)
-      setTimeout(() => {
-        router.push("/admin");
-      }, 300);
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong. Try again.");
+      await login(formData.username, formData.password);
+      router.push("/admin");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4">
       <motion.div
-        className="bg-gray-950 p-10 rounded-2xl shadow-lg w-[90%] max-w-md"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
       >
-        <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-blue-400 text-transparent bg-clip-text text-center">
-          Admin Login
-        </h1>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <Shield className="text-white" size={32} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Admin Portal
+          </h1>
+          <p className="text-gray-600">Sign in to access the dashboard</p>
+        </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3"
+          >
+            <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
+            <p className="text-red-700 text-sm">{error}</p>
+          </motion.div>
+        )}
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm mb-1">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-              required
-            />
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Username
+            </label>
+            <div className="relative">
+              <User
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="text"
+                value={formData.username}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
+                required
+                placeholder="Enter admin username"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-              required
-            />
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <Lock
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required
+                placeholder="Enter password"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
           </div>
 
-          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-
-          <motion.button
+          <button
             type="submit"
             disabled={loading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 py-2 rounded-md font-semibold hover:shadow-lg transition"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2"
           >
-            {loading ? "Logging in..." : "Login"}
-          </motion.button>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <>
+                <Shield size={20} />
+                <span>Sign In</span>
+              </>
+            )}
+          </button>
         </form>
+
+        {/* Footer */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500">
+            Protected area • Authorized access only
+          </p>
+        </div>
       </motion.div>
     </div>
   );

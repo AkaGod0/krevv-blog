@@ -1,4 +1,3 @@
-// admin/create/page.tsx
 "use client";
 
 import { useState, useRef } from "react";
@@ -6,11 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import Cookies from "js-cookie";
 import dynamic from 'next/dynamic';
 import type { Editor } from '@tiptap/react';
+import { FileText, Image as ImageIcon, Tag, Sparkles, CheckCircle, AlertCircle, X } from "lucide-react";
 
 // Dynamic import (no SSR) + get editor instance
 const NovelEditor = dynamic(() => import('@/components/NovelEditor'), {
   ssr: false,
-  loading: () => <p className="p-8 text-center">Loading editor...</p>,
+  loading: () => (
+    <div className="p-8 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+      <p className="mt-2 text-gray-400">Loading editor...</p>
+    </div>
+  ),
 });
 
 const API = process.env.NEXT_PUBLIC_API_URL;
@@ -26,99 +31,22 @@ export default function CreatePostPage() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [successModal, setSuccessModal] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({
+    show: false,
+    message: "",
+  });
 
-  // This is the key: reference to the editor instance
+  // Reference to the editor instance
   const editorRef = useRef<Editor | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: any) => {
     const { name, value, files } = e.target;
     setForm({ ...form, [name]: files ? files[0] : value });
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setMessage("");
-
-  // Step 1: Collect all images + their blob URLs from editor
-  const imageMap: { file: File; blobUrl: string }[] = [];
-
-  editorRef.current?.state.doc.descendants((node: any) => {
-    if (node.type.name === "image" && node.attrs.src.startsWith("blob:")) {
-      // Try to get original File if you saved it with data-file
-      const savedFile = node.attrs["data-file"];
-      if (savedFile instanceof File) {
-        imageMap.push({ file: savedFile, blobUrl: node.attrs.src });
-      } else {
-        // Fallback: convert blob URL to File
-        fetch(node.attrs.src)
-          .then(r => r.blob())
-          .then(blob => {
-            const file = new File([blob], `image-${Date.now()}.jpg`, { type: blob.type });
-            imageMap.push({ file, blobUrl: node.attrs.src });
-          });
-      }
-    }
-  });
-
-  // Wait for any async blob → File conversions
-  await new Promise(resolve => setTimeout(resolve, 200));
-
-  // Step 2: Upload post with TEMP content + files
-  const formData = new FormData();
-  formData.append("title", form.title);
-  formData.append("content", "TEMP_CONTENT"); // ← Don't send real HTML yet!
-  formData.append("category", form.category);
-  formData.append("keywords", JSON.stringify(form.keywords.split(",").map(k => k.trim()).filter(Boolean)));
-
-  if (form.image) formData.append("image", form.image);
-
-  // Add all editor images
-  imageMap.forEach(({ file }) => formData.append("contentImages", file));
-
-  // Add manual uploads too
-  form.contentImages.forEach(file => formData.append("contentImages", file));
-
-  try {
-    const token = Cookies.get("token");
-    if (!token) throw new Error("Please login");
-
-    const res = await fetch(`${API}/posts`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to create post");
-
-    // Step 3: Replace blob URLs with real Cloudinary URLs
-    let finalContent = editorRef.current?.getHTML() || "";
-
-    imageMap.forEach(({ blobUrl }, index) => {
-      const realUrl = data.contentImages?.[index];
-      if (realUrl) {
-        finalContent = finalContent.split(blobUrl).join(realUrl);
-      }
-    });
-
-    // Step 4: Update post with REAL content (real image URLs)
-    const updateRes = await fetch(`${API}/posts/${data._id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ content: finalContent }),
-    });
-
-    if (!updateRes.ok) throw new Error("Failed to update content");
-
-    setMessage("Post Created Successfully with Images!");
-    setTimeout(() => {
-  setMessage("");
-}, 4000); // Message disappears after 4 seconds
+  const resetForm = () => {
     setForm({
       title: "",
       content: "",
@@ -127,77 +55,306 @@ const handleSubmit = async (e: React.FormEvent) => {
       keywords: "",
       contentImages: []
     });
-    editorRef.current?.commands.clearContent();
+    
+    // Clear editor content
+    if (editorRef.current) {
+      editorRef.current.commands.clearContent();
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
-  } catch (err: any) {
-    setMessage("Error: " + err.message);
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Step 1: Collect all images + their blob URLs from editor
+    const imageMap: { file: File; blobUrl: string }[] = [];
+
+    editorRef.current?.state.doc.descendants((node: any) => {
+      if (node.type.name === "image" && node.attrs.src.startsWith("blob:")) {
+        const savedFile = node.attrs["data-file"];
+        if (savedFile instanceof File) {
+          imageMap.push({ file: savedFile, blobUrl: node.attrs.src });
+        } else {
+          fetch(node.attrs.src)
+            .then(r => r.blob())
+            .then(blob => {
+              const file = new File([blob], `image-${Date.now()}.jpg`, { type: blob.type });
+              imageMap.push({ file, blobUrl: node.attrs.src });
+            });
+        }
+      }
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Step 2: Upload post with TEMP content + files
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("content", "TEMP_CONTENT");
+    formData.append("category", form.category);
+    formData.append("keywords", form.keywords);
+
+    if (form.image) formData.append("image", form.image);
+
+    imageMap.forEach(({ file }) => formData.append("contentImages", file));
+    form.contentImages.forEach(file => formData.append("contentImages", file));
+
+    try {
+      const token = Cookies.get("admin_token") || Cookies.get("token");
+      if (!token) throw new Error("Please login");
+
+      const res = await fetch(`${API}/posts`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to create post");
+
+      // Step 3: Replace blob URLs with real Cloudinary URLs
+      let finalContent = editorRef.current?.getHTML() || "";
+
+      imageMap.forEach(({ blobUrl }, index) => {
+        const realUrl = data.contentImages?.[index];
+        if (realUrl) {
+          finalContent = finalContent.split(blobUrl).join(realUrl);
+        }
+      });
+
+      // Step 4: Update post with REAL content
+      const updateRes = await fetch(`${API}/posts/${data._id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: finalContent }),
+      });
+
+      if (!updateRes.ok) throw new Error("Failed to update content");
+
+      // ✅ Show success modal
+      setSuccessModal(true);
+      
+      // ✅ Reset form
+      resetForm();
+
+      // ✅ Auto-hide modal after 3 seconds
+      setTimeout(() => {
+        setSuccessModal(false);
+      }, 3000);
+
+    } catch (err: any) {
+      setErrorModal({
+        show: true,
+        message: err.message || 'Failed to create post'
+      });
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 text-white p-4 sm:p-10">
-      <motion.h1
-        className="text-3xl sm:text-5xl font-extrabold text-center bg-gradient-to-r from-pink-400 to-purple-300 bg-clip-text text-transparent mb-8 sm:mb-10"
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        Create New Post
-      </motion.h1>
-
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-black/40 backdrop-blur-xl rounded-3xl p-6 sm:p-10 shadow-2xl border border-purple-700/40">
-        <div className="grid gap-6">
-          <input type="text" name="title" placeholder="Post Title" value={form.title} onChange={handleChange} required className="p-4 rounded-xl bg-white/90 text-black" />
-          
-          <input type="text" name="category" placeholder="Category" value={form.category} onChange={handleChange} required className="p-4 rounded-xl bg-white/90 text-black" />
-
-          {/* Editor */}
-          <div>
-            <label className="block mb-3 text-lg font-medium">Content</label>
-            <div className="rounded-xl overflow-hidden border border-purple-500/30">
-              <NovelEditor
-                content={form.content}
-                onChange={(html) => setForm(prev => ({ ...prev, content: html }))}
-                // This exposes the editor instance
-                onCreate={({ editor }) => { editorRef.current = editor; }}
-              />
-            </div>
-          </div>
-
-          {/* Featured Image */}
-          <div>
-            <label className="block mb-2">Featured Image</label>
-            <input type="file" name="image" accept="image/*" onChange={handleChange} className="w-full text-gray-300" />
-          </div>
-
-          {/* Keywords */}
-          <input type="text" name="keywords" placeholder="Keywords (comma separated)" value={form.keywords} onChange={handleChange} className="p-4 rounded-xl bg-white/90 text-black" />
-
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-xl font-bold text-xl"
-          >
-            {loading ? "Creating Post..." : "Create Post"}
-          </motion.button>
-        </div>
-      </form>
-
+    <div className="space-y-6">
+      {/* Success Toast Modal - Top Right */}
       <AnimatePresence>
-        {message && (
+        {successModal && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className={`fixed top-20 right-5 px-6 py-3 rounded-xl text-lg font-medium ${message.includes("Success") ? "bg-green-600" : "bg-red-600"}`}
+            initial={{ opacity: 0, y: -50, x: 100 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, y: -50, x: 100 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 z-50 max-w-md"
           >
-            {message}
+            <CheckCircle size={24} className="flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold">Success!</p>
+              <p className="text-sm text-green-50">Post created successfully</p>
+            </div>
+            <button
+              onClick={() => setSuccessModal(false)}
+              className="text-white hover:text-green-100 transition"
+            >
+              <X size={20} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-    </main>
+
+      {/* Error Modal */}
+      <AnimatePresence>
+        {errorModal.show && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setErrorModal({ show: false, message: "" })}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-red-100 rounded-full p-3">
+                  <AlertCircle className="text-red-600" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">Error</h3>
+              </div>
+
+              <p className="text-gray-600 mb-6">{errorModal.message}</p>
+
+              <button
+                onClick={() => setErrorModal({ show: false, message: "" })}
+                className="w-full px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition"
+              >
+                Close
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 text-white"
+      >
+        <div className="flex items-center gap-3 mb-2">
+          <Sparkles size={32} />
+          <h1 className="text-3xl font-bold">Create New Post</h1>
+        </div>
+        <p className="text-purple-100">
+          Create engaging content for your blog
+        </p>
+      </motion.div>
+
+      {/* Form */}
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        onSubmit={handleSubmit}
+        className="bg-white rounded-xl shadow-lg p-8 space-y-6"
+      >
+        {/* Title */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <FileText size={18} />
+              Post Title *
+            </div>
+          </label>
+          <input
+            type="text"
+            name="title"
+            placeholder="Enter an engaging title..."
+            value={form.title}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-gray-800"
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <Tag size={18} />
+              Category *
+            </div>
+          </label>
+          <input
+            type="text"
+            name="category"
+            placeholder="e.g., Technology, Lifestyle, Business"
+            value={form.category}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-gray-800"
+          />
+        </div>
+
+        {/* Editor */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Content *
+          </label>
+          <div className="rounded-lg overflow-hidden border border-gray-300">
+            <NovelEditor
+              content={form.content}
+              onChange={(html) => setForm(prev => ({ ...prev, content: html }))}
+              onCreate={({ editor }) => { editorRef.current = editor; }}
+            />
+          </div>
+        </div>
+
+        {/* Featured Image */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <ImageIcon size={18} />
+              Featured Image
+            </div>
+          </label>
+          <div className="relative">
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="image" 
+              accept="image/*"
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+            />
+          </div>
+          {form.image && (
+            <p className="mt-2 text-sm text-gray-600">
+              Selected: {form.image.name}
+            </p>
+          )}
+        </div>
+
+        {/* Keywords */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Keywords (comma separated)
+          </label>
+          <input
+            type="text"
+            name="keywords"
+            placeholder="e.g., technology, innovation, future"
+            value={form.keywords}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-gray-800"
+          />
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-4 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Creating Post...
+            </>
+          ) : (
+            <>
+              <Sparkles size={20} />
+              Create Post
+            </>
+          )}
+        </button>
+      </motion.form>
+    </div>
   );
 }
