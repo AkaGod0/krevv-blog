@@ -313,17 +313,17 @@ export default function Navbar() {
                   </div>
                 </>
               ) : (
-                <div className="pt-3 border-t border-gray-200 space-y-2">
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <button className="w-full px-6 py-2 text-amber-600 border-2 border-amber-500 font-semibold rounded-lg transition">
-                      Log In
-                    </button>
-                  </Link>
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                    <button className="w-full px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow transition">
-                      Sign Up
-                    </button>
-                  </Link>
+                <div className="pt-3 border-t border-gray-200 flex flex-col gap-4">
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                      <button className="w-full px-6 py-2 text-amber-600 border-2 border-amber-500 font-semibold rounded-lg transition">
+                        Log In
+                      </button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                      <button className="w-full px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow transition">
+                        Sign Up
+                      </button>
+                    </Link>
                 </div>
               )}
             </div>

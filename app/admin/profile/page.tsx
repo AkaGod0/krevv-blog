@@ -102,7 +102,6 @@ export default function AdminProfilePage() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    username: "",
     email: "",
     phone: "",
     bio: "",
@@ -129,12 +128,10 @@ export default function AdminProfilePage() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   
- useEffect(() => {
+  useEffect(() => {
     const refreshProfile = async () => {
       try {
-        
         const res = await adminApi.get("/admin/profile");
-      
         updateAdminProfile(res.data);
       } catch (error) {
         console.error("Failed to refresh profile:", error);
@@ -144,17 +141,14 @@ export default function AdminProfilePage() {
     if (admin) {
       refreshProfile();
     }
-  }, [])
-
+  }, []);
 
   // ✅ Update form data when admin data loads or changes
   useEffect(() => {
     if (admin) {
-  
       setFormData({
         firstName: admin.firstName || "",
         lastName: admin.lastName || "",
-        username: admin.username || "",
         email: admin.email || "",
         phone: admin.phone || "",
         bio: admin.bio || "",
@@ -390,7 +384,7 @@ export default function AdminProfilePage() {
               </p>
             </div>
 
-            {/* ✅ Display Current Bio - Check both admin.bio and formData.bio */}
+            {/* ✅ Display Current Bio */}
             {(admin.bio || formData.bio) && (
               <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="flex items-start gap-2 mb-2">
@@ -404,8 +398,6 @@ export default function AdminProfilePage() {
                 </p>
               </div>
             )}
-
-           
           </motion.div>
 
           {/* Profile Information */}
@@ -461,31 +453,6 @@ export default function AdminProfilePage() {
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Username Field */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Username
-                </label>
-                <div className="relative">
-                  <AtSign
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) =>
-                      setFormData({ ...formData, username: e.target.value })
-                    }
-                    placeholder="johndoe"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-gray-800"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Your unique username for the platform
-                </p>
               </div>
 
               <div>

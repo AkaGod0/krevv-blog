@@ -133,22 +133,6 @@ export default function Footer() {
                   <span className="text-blue-400">→</span> Browse Jobs
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/post-job"
-                  className="text-gray-300 hover:text-pink-400 transition-colors duration-300 flex items-center gap-2"
-                >
-                  <span className="text-blue-400">→</span> Post a Job
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/blog"
-                  className="text-gray-300 hover:text-pink-400 transition-colors duration-300 flex items-center gap-2"
-                >
-                  <span className="text-blue-400">→</span> Blog
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

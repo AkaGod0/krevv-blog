@@ -17,8 +17,10 @@ import {
   Search,
   FileText,
   X,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
+import DOMPurify from 'dompurify'; 
 import { useRouter } from "next/navigation";
 
 const stripHtmlAndImages = (html: string) => {
@@ -31,6 +33,30 @@ const stripHtmlAndImages = (html: string) => {
     .trim()
     .slice(0, 150)
     + (html.length > 150 ? "..." : "");
+};
+
+// ✅ New function for longer content preview (for post cards)
+const getContentPreview = (html: string, maxLength: number = 120) => {
+  if (!html) return "No content available";
+  
+  // Remove all HTML tags and entities
+  const text = html
+    .replace(/<img[^>]*>/gi, "") // Remove images
+    .replace(/<[^>]+>/g, " ") // Remove all HTML tags
+    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
+    .replace(/&[a-z]+;/gi, " ") // Remove HTML entities
+    .replace(/\s+/g, " ") // Replace multiple spaces with single space
+    .trim();
+  
+  if (text.length <= maxLength) return text;
+  
+  // Cut at the last complete word
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  
+  return lastSpace > 0 
+    ? truncated.slice(0, lastSpace) + "..." 
+    : truncated + "...";
 };
 
 interface Post {
@@ -608,7 +634,19 @@ export default function HomePage() {
                   </h3>
                 </Link>
 
-                <div className="flex items-center text-sm text-gray-400 mt-3 gap-2">
+                {/* ✅ Content Preview - Clean text without HTML */}
+                 {/* Content with responsive table wrapper */}
+             {/* Content with responsive table wrapper */}
+                    {/* ✅ Content Preview with Prose Styling */}
+{/* ✅ Content Preview - Simple First Line */}
+<p className="text-sm text-gray-600 mb-4 line-clamp-2">
+  {post?.content
+    ?.replace(/<[^>]+>/g, " ") // Strip all HTML
+    .replace(/\s+/g, " ") // Clean spaces
+    .trim()
+    .slice(0, 100) + "..."}
+</p>
+                <div className="flex items-center text-sm text-gray-400 gap-2">
                   <span>{post.author}</span>
                   <span>•</span>
                   <span>{new Date(post.createdAt).toLocaleDateString()}</span>
@@ -630,7 +668,7 @@ export default function HomePage() {
                   </button>
 
                   <div className="flex items-center gap-1 text-gray-500">
-                    <span className="text-sm">👁️</span>
+                    <Eye size={16} />
                     <span className="text-sm">{post.views || 0}</span>
                   </div>
 
