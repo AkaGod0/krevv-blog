@@ -155,7 +155,7 @@ export default function Navbar() {
                         My Profile
                       </Link>
                       <Link
-                        href="../jobs/my-jobs"
+                        href="/jobs/my-jobs"
                         className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-amber-50 transition"
                         onClick={() => setUserMenuOpen(false)}
                       >
@@ -285,7 +285,7 @@ export default function Navbar() {
                       My Profile
                     </Link>
                     <Link
-                      href="../jobs/my-jobs"
+                      href="/jobs/my-jobs"
                       className="flex items-center gap-2 py-2 text-gray-700 hover:text-amber-600 font-medium transition"
                       onClick={() => setMobileMenuOpen(false)}
                     >
