@@ -6,7 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
-import BulletList from "@tiptap/extension-bullet-list";
+import BulletList from "@tiptap/extension-bullet-list"; 
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
 import Heading from "@tiptap/extension-heading";
@@ -135,24 +135,38 @@ const NovelEditor = ({ content, onChange, onCreate }: NovelEditorProps) => {
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     onCreate: ({ editor }) => onCreate?.({ editor }),
     
-    // ✅ Show floating menu when text is selected
+    // ✅ Fixed floating menu positioning
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection;
       const hasSelection = from !== to;
 
       if (hasSelection) {
-        // Get selection coordinates
-        const { view } = editor;
-        const { from: fromPos } = view.state.selection;
-        const start = view.coordsAtPos(fromPos);
-        
-        // Position the floating menu above the selection
-        const menuWidth = 400; // Approximate width of floating menu
-        const left = start.left - menuWidth / 2;
-        const top = start.top - 60; // Position above selection
+        setTimeout(() => {
+          const { view } = editor;
+          const { from: fromPos } = view.state.selection;
+          const start = view.coordsAtPos(fromPos);
+          
+          // Get floating menu width
+          const menuWidth = 500; // Approximate width
+          const menuHeight = 50; // Approximate height
+          
+          // Calculate left position (centered on selection, but keep within viewport)
+          let left = start.left - menuWidth / 2;
+          const viewportWidth = window.innerWidth;
+          
+          // Keep menu within viewport bounds
+          if (left < 10) {
+            left = 10; // Minimum 10px from left edge
+          } else if (left + menuWidth > viewportWidth - 10) {
+            left = viewportWidth - menuWidth - 10; // Maximum 10px from right edge
+          }
+          
+          // Position above selection
+          const top = start.top - menuHeight - 10; // 10px gap above selection
 
-        setFloatingMenuPosition({ top, left });
-        setShowFloatingMenu(true);
+          setFloatingMenuPosition({ top, left });
+          setShowFloatingMenu(true);
+        }, 0);
       } else {
         setShowFloatingMenu(false);
       }
@@ -492,7 +506,7 @@ const NovelEditor = ({ content, onChange, onCreate }: NovelEditorProps) => {
         </div>
       </div>
 
-      {/* ✅ FLOATING TOOLBAR - Appears when text is selected */}
+      {/* ✅ FLOATING TOOLBAR - Fixed positioning */}
       {showFloatingMenu && (
         <div
           ref={floatingMenuRef}
@@ -591,6 +605,16 @@ const NovelEditor = ({ content, onChange, onCreate }: NovelEditorProps) => {
           </button>
 
           <div className="w-px h-6 bg-gray-700 mx-1" />
+
+          {/* ✅ Image Upload */}
+          <button
+            type="button"
+            onClick={addImage}
+            className="p-2 rounded transition-colors text-gray-300 hover:bg-gray-800"
+            title="Add Image"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </button>
 
           {/* Link */}
           <button

@@ -28,6 +28,7 @@ interface Application {
   job: {
     _id: string;
     title: string;
+    slug:string;
     company: string;
     location: string;
     salary: string;
@@ -301,7 +302,7 @@ export default function MyApplicationsPage() {
 
                     {/* Actions */}
                     <div className="flex flex-row lg:flex-col gap-2 w-full lg:w-auto lg:min-w-[140px]">
-                      <Link href={`/jobs/${application.job._id}`} className="flex-1 lg:flex-initial">
+                      <Link href={`/jobs/${application.job.slug}`} className="flex-1 lg:flex-initial">
                         <button className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition text-sm">
                           View Job
                         </button>

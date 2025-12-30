@@ -119,6 +119,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/faq"
+                  className="text-gray-300 hover:text-pink-400 transition-colors duration-300 flex items-center gap-2"
+                >
+                  <span className="text-blue-400">→</span> FAQ
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/contact"
                   className="text-gray-300 hover:text-pink-400 transition-colors duration-300 flex items-center gap-2"
                 >
@@ -155,6 +163,13 @@ export default function Footer() {
               className="hover:text-pink-400 transition-colors duration-300"
             >
               Privacy
+            </Link>
+            <span>•</span>
+            <Link
+              href="/faq"
+              className="hover:text-pink-400 transition-colors duration-300"
+            >
+              FAQ
             </Link>
             <span>•</span>
             <Link

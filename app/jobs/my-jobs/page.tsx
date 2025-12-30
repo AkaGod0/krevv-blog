@@ -298,7 +298,7 @@ export default function MyJobsPage() {
                         Apps
                       </button>
                     </Link>
-                    <Link href={`/edit-job/${job.slug}`}>
+                    <Link href={`/jobs/edit/${job.slug}`}>
                       <button className="w-full px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition text-xs flex items-center justify-center gap-1">
                         <Edit size={14} />
                         Edit
@@ -392,7 +392,7 @@ export default function MyJobsPage() {
                         Applications
                       </button>
                     </Link>
-                    <Link href={`/edit-job/${job.slug}`} className="flex-1 md:flex-1 lg:flex-initial">
+                    <Link href={`/jobs/edit/${job.slug}`} className="flex-1 md:flex-1 lg:flex-initial">
                       <button className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition text-sm flex items-center justify-center gap-1.5">
                         <Edit size={16} />
                         Edit

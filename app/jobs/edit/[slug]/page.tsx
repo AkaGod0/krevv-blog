@@ -153,7 +153,7 @@ export default function EditJobPage({
       await api.patch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/${jobId}`, formData);
       setSuccess(true);
       setTimeout(() => {
-        router.push("/my-jobs");
+        router.push("/jobs/my-jobs");
       }, 1500);
     } catch (err: any) {
       console.error("Error updating job:", err);
