@@ -8,10 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all posts
   let posts: any[] = [];
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?limit=0`);{
-      cache: "no-store"
-    });
-    
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?limit=0`);
     const data = await res.json();
     posts = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
   } catch (err) {
