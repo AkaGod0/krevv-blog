@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all jobs 
   let jobs: any[] = [];
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=0`);{
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=1000`);{
       cache: "no-store"
     });
     
