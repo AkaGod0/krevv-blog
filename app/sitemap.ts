@@ -18,25 +18,6 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "[https://www.krevv.com](htt
     console.error("❌ Failed to fetch posts for sitemap:", err);
   }
 
-let jobs: any[] = [];
-
-try {
-const res = await fetch(
-`${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=0`, {
-cache: "no-store"
-});
-
-
-  const data = await res.json();
-jobs = Array.isArray(data.data) ? data.data : [];
-
-
-
-} catch (err) {
-console.error("❌ Failed to fetch jobs for sitemap:", err);
-}
-
-
   
 // Static pages
 const staticRoutes: MetadataRoute.Sitemap = [
