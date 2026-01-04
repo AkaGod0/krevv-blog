@@ -5,22 +5,18 @@ export const revalidate = 3600; // Re-generate sitemap every 1 hour
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "[https://www.krevv.com](https://www.krevv.com/)";
 
-let posts: any[] = [];
+  let posts: any[] = [];
 
-try {
-const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?limit=0`, {
-cache: "no-store"
-});
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?limit=0`, {
+      cache: "no-store"
+    });
 
-```
-  const data = await res.json();
-posts = Array.isArray(data.data) ? data.data : [];
-
-```
-
-} catch (err) {
-console.error("❌ Failed to fetch posts for sitemap:", err);
-}
+    const data = await res.json();
+    posts = Array.isArray(data.data) ? data.data : [];
+  } catch (err) {
+    console.error("❌ Failed to fetch posts for sitemap:", err);
+  }
 
 let jobs: any[] = [];
 
@@ -30,11 +26,11 @@ const res = await fetch(
 cache: "no-store"
 });
 
-```
+
   const data = await res.json();
 jobs = Array.isArray(data.data) ? data.data : [];
 
-```
+
 
 } catch (err) {
 console.error("❌ Failed to fetch jobs for sitemap:", err);
