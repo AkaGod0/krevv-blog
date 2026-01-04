@@ -85,3 +85,37 @@ export default async function JobDetailPage({
 }) {
   return <JobDetailClient params={params} />;
 }
+
+
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: job.title,
+      description: job.description,
+      datePosted: job.createdAt,
+      validThrough: job.expiryDate,
+      employmentType: job.type,
+      hiringOrganization: {
+        "@type": "Organization",
+        name: job.company,
+        sameAs: "https://www.krevv.com",
+        logo: job.companyLogo,
+      },
+      jobLocationType: job.remote ? "TELECOMMUTE" : undefined,
+      jobLocation: job.remote
+        ? undefined
+        : {
+            "@type": "Place",
+            address: {
+              "@type": "PostalAddress",
+              addressCountry: job.country,
+              addressLocality: job.city,
+            },
+          },
+    }),
+  }}
+/>
