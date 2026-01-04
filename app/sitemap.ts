@@ -141,6 +141,14 @@ changeFrequency: "daily",
 priority: 0.7,
 }));
 
-
+// --------------------
+// Dynamic jobs
+// --------------------
+const jobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
+url: `${baseUrl}/jobs/${job.slug}`,
+lastModified: new Date(job.updatedAt || job.createdAt),
+changeFrequency: "daily",
+priority: 0.8,
+}));
 return [...staticRoutes, ...postRoutes, ...jobRoutes];
 }
