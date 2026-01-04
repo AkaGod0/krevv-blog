@@ -144,19 +144,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic blog posts
+  // --------------------
+  // Dynamic posts
+  // --------------------
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/post/${post.slug}`,
     lastModified: new Date(post.updatedAt || post.createdAt),
-    changeFrequency: 'daily' as const,
+    changeFrequency: "daily",
     priority: 0.7,
   }));
 
-  // Dynamic job listings
+  // --------------------
+  // Dynamic jobs
+  // --------------------
   const jobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
     url: `${baseUrl}/jobs/${job.slug}`,
     lastModified: new Date(job.updatedAt || job.createdAt),
-    changeFrequency: 'daily' as const,
+    changeFrequency: "daily",
     priority: 0.8,
   }));
 
