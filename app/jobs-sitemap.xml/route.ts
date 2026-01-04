@@ -19,15 +19,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("❌ Failed to fetch jobs for sitemap:", err);
   }
   
- // --------------------
-  // Dynamic jobs
-  // --------------------
-  const jobRoutes: MetadataRoute.Sitemap = jobs.map((job) => ({
-    url: `${baseUrl}/jobs/${job.slug}`,
-    lastModified: new Date(job.updatedAt || job.createdAt),
-    changeFrequency: "daily",
-    priority: 0.8,
-  }));
+  const urls = jobs
+    .map(
+      (job: any) => `
+  <url>
+    <loc>${baseUrl}/jobs/${job.slug}</loc>
+    <lastmod>${new Date(job.updatedAt || job.createdAt).toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`
+    )
+    .join("");
   
    return [ ...jobRoutes];
 }
