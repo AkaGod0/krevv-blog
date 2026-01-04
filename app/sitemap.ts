@@ -1,19 +1,53 @@
 import { MetadataRoute } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Re-generate sitemap every 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.krevv.com";
 
-  // Fetch posts
-  const postsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?limit=0`, { cache: "no-store" });
-  const postsData = await postsRes.json();
-  const posts = Array.isArray(postsData.data) ? postsData.data : [];
+  // --------------------
+  // Fetch blog posts
+  // --------------------
+  let posts: any[] = [];
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/posts?limit=0`,
+      {
+        next: { revalidate: 3600 }, // 🔑 critical fix
+      }
+    );
 
-  // Fetch jobs
-  const jobsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=0`, { cache: "no-store" });
-  const jobsData = await jobsRes.json();
-  const jobs = Array.isArray(jobsData.data) ? jobsData.data : [];
+    const data = await res.json();
+    posts = Array.isArray(data.data)
+      ? data.data
+      : Array.isArray(data)
+      ? data
+      : [];
+  } catch (err) {
+    console.error("Failed to fetch posts for sitemap", err);
+  }
+
+  // --------------------
+  // Fetch active jobs
+  // --------------------
+  let jobs: any[] = [];
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=0`,
+      {
+        next: { revalidate: 3600 }, // 🔑 critical fix
+      }
+    );
+
+    const data = await res.json();
+    jobs = Array.isArray(data.data)
+      ? data.data
+      : Array.isArray(data)
+      ? data
+      : [];
+  } catch (err) {
+    console.error("Failed to fetch jobs for sitemap", err);
+  }
 
   // Static pages
   const staticRoutes: MetadataRoute.Sitemap = [
