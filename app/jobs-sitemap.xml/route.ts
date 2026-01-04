@@ -1,24 +1,19 @@
-import { MetadataRoute } from "next";
+import { NextResponse } from "next/server";
 
-export const revalidate = 3600; // Re-generate sitemap every 1 hour
+export const dynamic = "force-dynamic";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.krevv.com";
 
- let jobs: any[] = [];
-  
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=0`, {
-      cache: "no-store"
-    });
-     
-      const data = await res.json();
-    jobs = Array.isArray(data.data) ? data.data : [];
-  } catch (err) {
-    console.error("❌ Failed to fetch jobs for sitemap:", err);
-  }
-  
+  // Fetch active jobs (NO CACHE)
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/jobs?status=active&limit=0`,
+    { cache: "no-store" }
+  );
+
+  const data = await res.json();
+  const jobs = Array.isArray(data.data) ? data.data : [];
+
   const urls = jobs
     .map(
       (job: any) => `
@@ -30,7 +25,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   </url>`
     )
     .join("");
-  
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
