@@ -110,7 +110,7 @@ export default function DataRetentionPage() {
                 </div>
                 <div className="p-4 bg-purple-900/20 rounded-lg border border-purple-500/30">
                   <h4 className="font-bold text-purple-400 mb-2">3. Legal Compliance</h4>
-                  <p className="text-gray-300">Retention aligns with Nigerian laws (NDPR, Cybercrime Act), international laws (GDPR, DMCA, CCPA), and labor regulations.</p>
+                  <p className="text-gray-300">Retention aligns with laws (Cybercrime Act), international laws (GDPR, DMCA, CCPA), and labor regulations.</p>
                 </div>
                 <div className="p-4 bg-cyan-900/20 rounded-lg border border-cyan-500/30">
                   <h4 className="font-bold text-cyan-400 mb-2">4. Security Preservation</h4>
@@ -399,7 +399,7 @@ export default function DataRetentionPage() {
               title="Governing Law & Jurisdiction"
             >
               <ul className="list-disc list-inside text-gray-300 space-y-2">
-                <li>This Notice is governed by the <span className="font-semibold text-green-400">laws of the Federal Republic of Nigeria</span>.</li>
+                <li>This Notice is governed by the <span className="font-semibold text-green-400">European Union and international laws.</span>.</li>
                 <li>Krevv complies with international data protection standards, including <span className="font-semibold text-cyan-400">NDPR, GDPR, DMCA, and CCPA principles</span>.</li>
                 <li>All disputes fall under the <span className="font-semibold text-green-400">exclusive jurisdiction of Nigerian courts</span>.</li>
               </ul>
