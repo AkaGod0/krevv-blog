@@ -363,7 +363,7 @@ export default function EmployerPostingPage() {
             >
               <p className="text-gray-300">
                 This Policy shall be governed by the{" "}
-                <span className="font-semibold text-green-400">laws of the Federal Republic of Nigeria</span>.
+                <span className="font-semibold text-green-400">European Union and international laws</span>.
               </p>
             </Section>
 
