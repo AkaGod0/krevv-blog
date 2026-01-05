@@ -267,7 +267,7 @@ export default function Dcmapage() {
               title="Cooperation With Law Enforcement"
             >
               <p className="text-gray-300 mb-3">
-                Krevv fully cooperates with law enforcement agencies, courts, and regulatory authorities in Nigeria and internationally.
+                Krevv fully cooperates with law enforcement agencies, courts, and regulatory authorities local and internationally.
               </p>
               <p className="text-gray-300 mb-2">We may:</p>
               <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
@@ -317,7 +317,7 @@ export default function Dcmapage() {
             >
               <p className="text-gray-300 mb-2">
                 This Policy is governed by the{" "}
-                <span className="font-semibold text-green-400">laws of the Federal Republic of Nigeria</span>, 
+                <span className="font-semibold text-green-400">European Union and international laws</span>, 
                 while observing relevant international copyright frameworks, including the DMCA (U.S.) and Berne Convention principles.
               </p>
               <p className="text-yellow-400 font-semibold mt-2">
