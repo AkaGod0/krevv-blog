@@ -271,7 +271,7 @@ export default function AntiScamPage() {
                 Krevv <span className="font-bold text-blue-400">FULLY COOPERATES</span> with:
               </p>
               <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
-                <li>Nigerian law enforcement agencies</li>
+                <li>Local ans international law enforcement agencies</li>
                 <li>Cybercrime units</li>
                 <li>Regulatory authorities</li>
                 <li>Court orders and subpoenas</li>
@@ -375,10 +375,10 @@ export default function AntiScamPage() {
             >
               <p className="text-gray-300 mb-2">
                 This Policy shall be governed exclusively by the{" "}
-                <span className="font-semibold text-green-400">laws of the Federal Republic of Nigeria</span>.
+                <span className="font-semibold text-green-400">European Union and international laws</span>.
               </p>
               <p className="text-green-400 font-semibold">
-                All disputes fall under the EXCLUSIVE JURISDICTION of Nigerian courts.
+                All disputes fall under the EXCLUSIVE JURISDICTION of Local nd International courts.
               </p>
             </Section>
 
