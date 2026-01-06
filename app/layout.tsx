@@ -10,7 +10,7 @@ import { AdminProvider } from "../app/admin/context/AdminContext"; // ✅ Add th
 
 export const metadata = {
   title: {
-    default: "Marketplace for Modern Work, Verified Jobs & Trusted Talent.",
+    default: "Marketplace for Modern Work, Verified Jobs & Trusted Talent",
     template: "%s | krevv",
   },
   icons: {
@@ -45,7 +45,7 @@ export const metadata = {
   publisher: "Krevv",
   robots: { index: true, follow: true },
   openGraph: {
-    title: "Marketplace for Modern Work, Verified Jobs & Trusted Talent.",
+    title: "Marketplace for Modern Work, Verified Jobs & Trusted Talent",
     description:
       "Discover verified jobs, hire trusted talent, and access a reliable marketplace designed to make work simple, secure, and efficient for everyone.",
     url: "https://krevv.com",
@@ -63,7 +63,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Marketplace for Modern Work, Verified Jobs & Trusted Talent.",
+    title: "Marketplace for Modern Work, Verified Jobs & Trusted Talent",
     description:
       "Discover verified jobs, hire trusted talent, and access a reliable marketplace designed to make work simple, secure, and efficient for everyone.",
     creator: "@yourhandle",
