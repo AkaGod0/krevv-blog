@@ -27,6 +27,13 @@ export const metadata = {
     "Discover verified jobs, hire trusted talent, and access a reliable marketplace designed to make work simple, secure, and efficient for everyone.",
   keywords: [
     "blog",
+    "articles",
+    "freelance",
+    "Remote jobs",
+    "nomad",
+    "krevv",
+    "resources",
+    "remote works",
     "stories",
     "inspiration",
     "tech",
