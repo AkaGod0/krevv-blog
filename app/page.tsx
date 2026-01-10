@@ -314,7 +314,7 @@ export default function HomePage() {
         >
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white leading-tight drop-shadow-2xl px-4">
             The future of work is here —{" "}
-            <span className="text-amber-400">flexible, global,</span> and in your hands
+            <span className="text-amber-400">flexible, global,</span> and built on trust
           </h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -322,7 +322,7 @@ export default function HomePage() {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="mt-6 sm:mt-8 text-base sm:text-lg md:text-2xl font-medium text-amber-100 max-w-3xl mx-auto leading-relaxed drop-shadow-lg px-4"
           >
-            We are your trusted guide through the world of freelancing and remote jobs, helping you build a career that fits your life, not the other way around.
+            We are your trusted marketplace for modern work—connecting verified opportunities with skilled talent, so careers and businesses grow on their own terms.
           </motion.p>
 
           {/* Search Bar Container */}
