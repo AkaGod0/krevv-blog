@@ -109,7 +109,7 @@ export default function EditPostPage() {
       if (!token) throw new Error("Please login again");
 
       const res = await fetch(`${API}/posts/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
@@ -124,6 +124,7 @@ export default function EditPostPage() {
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Failed to update post" });
       setTimeout(() => setMessage(null), 4000);
+      console.log(err)
     } finally {
       setLoading(false);
     }

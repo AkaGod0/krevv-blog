@@ -31,7 +31,7 @@ interface Stats {
   totalComments: number;
   totalViews: number;
   totalReviews: number;
-  totalReports: number; // ✅ NEW: Total reports
+  totalReports: number;
   recentUsers: any[];
   recentJobs: any[];
 }
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     totalComments: 0,
     totalViews: 0,
     totalReviews: 0,
-    totalReports: 0, // ✅ NEW
+    totalReports: 0,
     recentUsers: [],
     recentJobs: [],
   });
@@ -60,14 +60,13 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      // ✅ NEW: Fetch reports
       const [usersRes, jobsRes, blockedRes, postsRes, reviewsRes, reportsRes] = await Promise.all([
         adminApi.get("/admin/users"),
         adminApi.get("/admin/jobs"),
         adminApi.get("/admin/users/blocked"),
         adminApi.get("/posts?limit=1000"),
         adminApi.get("/reviews").catch(() => ({ data: [] })),
-        adminApi.get("/jobs/reports/all").catch(() => ({ data: [] })), // ✅ NEW
+        adminApi.get("/jobs/reports/all").catch(() => ({ data: [] })),
       ]);
 
       const users = usersRes.data;
@@ -92,7 +91,6 @@ export default function AdminDashboard() {
         reviews = reviewsRes.data.reviews;
       }
 
-      // ✅ NEW: Handle reports
       let reports = [];
       if (Array.isArray(reportsRes.data)) {
         reports = reportsRes.data;
@@ -120,7 +118,7 @@ export default function AdminDashboard() {
         totalComments,
         totalViews,
         totalReviews: reviews.length,
-        totalReports: reports.length, // ✅ NEW
+        totalReports: reports.length,
         recentUsers: users.slice(0, 5),
         recentJobs: jobs.slice(0, 5),
       });
@@ -136,7 +134,7 @@ export default function AdminDashboard() {
         totalComments: 0,
         totalViews: 0,
         totalReviews: 0,
-        totalReports: 0, // ✅ NEW
+        totalReports: 0,
         recentUsers: [],
         recentJobs: [],
       });
@@ -220,7 +218,6 @@ export default function AdminDashboard() {
       textColor: "text-yellow-600",
       bgColor: "bg-yellow-100",
     },
-    // ✅ NEW: Total Reports card
     {
       title: "Total Reports",
       value: stats.totalReports,
@@ -285,7 +282,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Content Stats Grid - Now with 6 items */}
+      {/* Content Stats Grid */}
       <div>
         <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4 px-1">
           Content Statistics
@@ -351,9 +348,21 @@ export default function AdminDashboard() {
                       {user.firstName?.charAt(0) || "U"}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-800 text-xs sm:text-sm md:text-base truncate">
-                        {user.firstName} {user.lastName}
-                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-gray-800 text-xs sm:text-sm md:text-base truncate">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        {/* ✅ UPDATED: Show verification status for all users */}
+                        {user.isEmailVerified ? (
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-600 text-[9px] sm:text-[10px] font-semibold rounded flex-shrink-0">
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-[9px] sm:text-[10px] font-semibold rounded flex-shrink-0">
+                            Not Verified
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 truncate">{user.email}</p>
                     </div>
                   </div>
@@ -448,7 +457,6 @@ export default function AdminDashboard() {
               <span className="hidden xs:inline">Manage </span>Posts
             </button>
           </Link>
-          {/* ✅ NEW: Reports button */}
           <Link href="/admin/reports" className="w-full">
             <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 sm:py-2.5 md:py-3 rounded-lg transition text-xs sm:text-sm md:text-base">
               <span className="hidden xs:inline">View </span>Reports
