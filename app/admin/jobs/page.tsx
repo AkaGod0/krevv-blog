@@ -20,6 +20,7 @@ import {
   XCircle,
   Flag,
   Tag,
+  Globe,
 } from "lucide-react";
 import { useAdmin, adminApi } from "../context/AdminContext";
 import Link from "next/link";
@@ -37,12 +38,14 @@ interface Job {
   status: string;
   experienceLevel: string;
   createdAt: string;
-  postedBy: {
+  isExternal?: boolean;
+  externalSource?: string;
+  postedBy?: {
     _id: string;
     firstName: string;
     lastName: string;
     email: string;
-  };
+  } | null;
   reports: any[];
 }
 
@@ -55,6 +58,7 @@ export default function AdminJobsPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterSource, setFilterSource] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [deletingJob, setDeletingJob] = useState<string | null>(null);
   const [toast, setToast] = useState("");
@@ -88,7 +92,7 @@ export default function AdminJobsPage() {
 
   useEffect(() => {
     filterJobs();
-  }, [jobs, searchTerm, filterStatus, filterType, filterCategory]);
+  }, [jobs, searchTerm, filterStatus, filterType, filterCategory, filterSource]);
 
   const fetchJobs = async () => {
     try {
@@ -127,6 +131,13 @@ export default function AdminJobsPage() {
       filtered = filtered.filter((job) => job.category === filterCategory);
     }
 
+    // Source filter
+    if (filterSource === 'external') {
+      filtered = filtered.filter((job) => job.isExternal === true);
+    } else if (filterSource === 'user') {
+      filtered = filtered.filter((job) => !job.isExternal);
+    }
+
     setFilteredJobs(filtered);
   };
 
@@ -135,6 +146,7 @@ export default function AdminJobsPage() {
     setFilterStatus("");
     setFilterType("");
     setFilterCategory("");
+    setFilterSource("");
   };
 
   const handleDeleteJob = async (jobId: string) => {
@@ -187,12 +199,17 @@ export default function AdminJobsPage() {
     return job.reports.length;
   };
 
+  const externalCount = jobs.filter(j => j.isExternal).length;
+  const userCount = jobs.filter(j => !j.isExternal).length;
+
   const stats = {
     total: jobs.length,
     active: jobs.filter((j) => j.status === "active").length,
     closed: jobs.filter((j) => j.status === "closed").length,
     draft: jobs.filter((j) => j.status === "draft").length,
     reported: jobs.filter((j) => j.reports && j.reports.length > 0).length,
+    external: externalCount,
+    user: userCount,
   };
 
   if (loading) {
@@ -238,7 +255,7 @@ export default function AdminJobsPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-6">
             <div className="bg-white/10 rounded-lg p-4">
               <p className="text-green-100 text-sm">Total Jobs</p>
               <p className="text-3xl font-bold">{stats.total}</p>
@@ -258,6 +275,14 @@ export default function AdminJobsPage() {
             <div className="bg-white/10 rounded-lg p-4">
               <p className="text-green-100 text-sm">Reported</p>
               <p className="text-3xl font-bold">{stats.reported}</p>
+            </div>
+            <div className="bg-white/10 rounded-lg p-4">
+              <p className="text-green-100 text-sm">🏢 Direct</p>
+              <p className="text-3xl font-bold">{stats.user}</p>
+            </div>
+            <div className="bg-white/10 rounded-lg p-4">
+              <p className="text-green-100 text-sm">🌐 External</p>
+              <p className="text-3xl font-bold">{stats.external}</p>
             </div>
           </div>
         </motion.div>
@@ -290,10 +315,9 @@ export default function AdminJobsPage() {
             >
               <Filter size={20} />
               <span>Filters</span>
-              {/* ✅ FIXED: Changed bg-red to bg-white */}
-              {(filterStatus || filterType || filterCategory) && (
+              {(filterStatus || filterType || filterCategory || filterSource) && (
                 <span className="ml-2 bg-white text-green-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
-                  {[filterStatus, filterType, filterCategory].filter(Boolean).length}
+                  {[filterStatus, filterType, filterCategory, filterSource].filter(Boolean).length}
                 </span>
               )}
             </button>
@@ -306,7 +330,7 @@ export default function AdminJobsPage() {
               animate={{ height: "auto", opacity: 1 }}
               className="overflow-hidden"
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Status
@@ -361,6 +385,23 @@ export default function AdminJobsPage() {
                     ))}
                   </select>
                 </div>
+
+                {/* Source Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Source
+                  </label>
+                  <select
+                    value={filterSource}
+                    onChange={(e) => setFilterSource(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white text-gray-900 appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                  >
+                    <option value="" className="text-gray-900">All Sources</option>
+                    <option value="user" className="text-gray-900">Direct Postings</option>
+                    <option value="external" className="text-gray-900">External (Aggregated)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="mt-4 flex justify-end">
@@ -380,7 +421,7 @@ export default function AdminJobsPage() {
         <p className="text-gray-600 mb-6">
           Showing <span className="font-semibold">{filteredJobs.length}</span> job
           {filteredJobs.length !== 1 && "s"}
-          {(searchTerm || filterStatus || filterType || filterCategory) && " matching your criteria"}
+          {(searchTerm || filterStatus || filterType || filterCategory || filterSource) && " matching your criteria"}
         </p>
 
         {/* Jobs List */}
@@ -393,11 +434,11 @@ export default function AdminJobsPage() {
             <Briefcase size={64} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-2xl font-bold text-gray-700 mb-2">No jobs found</h3>
             <p className="text-gray-500 mb-6">
-              {searchTerm || filterStatus || filterType || filterCategory
+              {searchTerm || filterStatus || filterType || filterCategory || filterSource
                 ? "Try adjusting your filters"
                 : "All jobs will appear here"}
             </p>
-            {(searchTerm || filterStatus || filterType || filterCategory) && (
+            {(searchTerm || filterStatus || filterType || filterCategory || filterSource) && (
               <button
                 onClick={clearFilters}
                 className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
@@ -428,18 +469,25 @@ export default function AdminJobsPage() {
                           job.type
                         )}`}
                       >
-                        {job.type.replace("_", " ").toUpperCase()}
+                        {job.type?.replace("_", " ").toUpperCase()}
                       </span>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
                           job.status
                         )}`}
                       >
-                        {job.status.toUpperCase()}
+                        {job.status?.toUpperCase()}
                       </span>
                       <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-purple-100 text-purple-700 border-purple-300">
                         {job.category}
                       </span>
+                      {/* External badge */}
+                      {job.isExternal && (
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-700 border-blue-300 flex items-center gap-1">
+                          <Globe size={12} />
+                          {job.externalSource || 'External'}
+                        </span>
+                      )}
                       {getTotalReportsCount(job) > 0 && (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-red-100 text-red-700 border-red-300 flex items-center gap-1">
                           <Flag size={14} />
@@ -477,7 +525,7 @@ export default function AdminJobsPage() {
                     <DollarSign size={16} className="text-gray-400" />
                     <div>
                       <p className="text-xs text-gray-500">Salary</p>
-                      <p className="text-sm font-semibold">{job.salary}</p>
+                      <p className="text-sm font-semibold">{job.salary || 'Not specified'}</p>
                     </div>
                   </div>
                 </div>
@@ -494,9 +542,12 @@ export default function AdminJobsPage() {
                     <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span>
-                      By {job.postedBy.firstName} {job.postedBy.lastName}
-                    </span>
+                    {/* ✅ FIXED: Check if postedBy exists */}
+                    {job.postedBy ? (
+                      <span>By {job.postedBy.firstName} {job.postedBy.lastName}</span>
+                    ) : (
+                      <span>Via {job.company}</span>
+                    )}
                   </div>
                 </div>
 
