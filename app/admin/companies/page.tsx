@@ -299,7 +299,7 @@ export default function ManageCompanies() {
                     <div className="flex items-center gap-1 italic text-xs">
                       <MapPin size={12} className="flex-shrink-0" /> 
                       <span className="truncate max-w-[150px]">
-                        {company.state || "N/A"}, {company.country || "N/A"}
+                        {company.headquarters || "N/A"}, {company.country || "N/A"}
                       </span>
                     </div>
                   </td>
