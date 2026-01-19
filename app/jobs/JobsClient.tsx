@@ -61,6 +61,9 @@ export default function JobsClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 12;
 
+  // Dummy description - ONLY for external jobs
+  const DUMMY_DESCRIPTION = "Join our team and be part of an innovative company that values creativity, collaboration, and growth. We offer competitive benefits and a dynamic work environment.";
+
   const categories = [
     'Technology', 'Healthcare', 'Finance', 'Education', 'Marketing',
     'Sales', 'Design', 'Engineering', 'Customer Service', 'Human Resources',
@@ -131,7 +134,6 @@ export default function JobsClient() {
     return colors[source] || 'bg-gray-100 text-gray-700';
   };
 
-  // Helper to get salary - ALWAYS returns something
   const getSalary = (salary: string) => {
     if (!salary || salary.trim() === "") {
       return "Competitive salary";
@@ -158,7 +160,6 @@ export default function JobsClient() {
 
   return (
     <main className="bg-[#fffaf6] min-h-screen text-gray-800">
-      {/* Header Section */}
       <section className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-16">
         <div className="max-w-7xl mx-auto px-5">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
@@ -172,7 +173,6 @@ export default function JobsClient() {
         </div>
       </section>
 
-      {/* Search and Filter Section */}
       <section className="max-w-7xl mx-auto px-5 -mt-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -252,7 +252,6 @@ export default function JobsClient() {
         </motion.div>
       </section>
 
-      {/* Results Count */}
       <section className="max-w-7xl mx-auto px-5 mt-8">
         <p className="text-gray-600">
           Showing <span className="font-semibold">{filteredJobs.length}</span> jobs
@@ -260,7 +259,6 @@ export default function JobsClient() {
         </p>
       </section>
 
-      {/* Jobs Grid */}
       <section className="max-w-7xl mx-auto px-5 mt-8 pb-20">
         {currentJobs.length === 0 ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
@@ -279,7 +277,6 @@ export default function JobsClient() {
                 transition={{ duration: 0.4, delay: idx * 0.05 }}
                 className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all p-6 border border-gray-100 hover:border-amber-300 hover:-translate-y-1"
               >
-                {/* Header with badges */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getJobTypeColor(job.type)}`}>
@@ -295,7 +292,6 @@ export default function JobsClient() {
                   <span className="text-xs text-gray-400">{new Date(job.createdAt).toLocaleDateString()}</span>
                 </div>
 
-                {/* Company logo + title - NO LINK ON TITLE */}
                 <div className="flex items-start gap-3 mb-3">
                   {job.companyLogo ? (
                     <img src={job.companyLogo} alt={job.company} className="w-12 h-12 rounded-lg object-cover bg-gray-100" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -305,18 +301,16 @@ export default function JobsClient() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    {/* Title without link */}
                     <h3 className="text-lg font-bold text-[#3e2a1a] line-clamp-2">{job.title}</h3>
                     <p className="text-sm text-gray-600 font-medium">{job.company}</p>
                   </div>
                 </div>
 
-                {/* Description - DUMMY TEXT */}
+                {/* ✅ Description - DUMMY for external, REAL for user-posted */}
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  Join our team and be part of an innovative company that values creativity, collaboration, and growth. We offer competitive benefits and a dynamic work environment.
+                  {job.isExternal ? DUMMY_DESCRIPTION : (job.description || DUMMY_DESCRIPTION)}
                 </p>
 
-                {/* Job details - ALWAYS SHOWS */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center gap-2 text-gray-500 text-sm">
                     <MapPin size={16} className="text-amber-500 flex-shrink-0" />
@@ -326,14 +320,12 @@ export default function JobsClient() {
                     <Tag size={16} className="text-purple-500 flex-shrink-0" />
                     <span className="line-clamp-1">{job.category || "General"}</span>
                   </div>
-                  {/* Salary - ALWAYS SHOWS */}
                   <div className="flex items-center gap-2 text-gray-500 text-sm">
                     <DollarSign size={16} className="text-green-500 flex-shrink-0" />
                     <span className="line-clamp-1">{getSalary(job.salary)}</span>
                   </div>
                 </div>
 
-                {/* Action button */}
                 {job.isExternal ? (
                   <a href={job.externalApplyUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 rounded-lg shadow transition-all flex items-center justify-center gap-2">
                     Apply at {job.company}
@@ -347,7 +339,6 @@ export default function JobsClient() {
                   </Link>
                 )}
 
-                {/* Footer */}
                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
                   <Clock size={14} />
                   {job.isExternal ? (
@@ -361,7 +352,6 @@ export default function JobsClient() {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex justify-center items-center gap-2 mt-12">
             <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className={`p-2 rounded-lg transition ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-amber-600 hover:bg-amber-50 shadow"}`}>
