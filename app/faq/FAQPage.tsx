@@ -26,7 +26,7 @@ const faqs: FAQ[] = [
     category: "General",
     question: "What is Krevv?",
     answer:
-      "Krevv is an online job posting platform that connects job seekers with employers by listing verified job opportunities in Nigeria and remote roles from around the world.",
+      "Krevv is an online job marketplace that connects job seekers with employers by listing verified job opportunities and remote roles from around the world.",
   },
   {
     category: "General",
