@@ -130,7 +130,7 @@ export default function PostsPage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-[#fffaf6]">
         <Loader2 className="animate-spin text-yellow-700 w-12 h-12 mb-4" />
-        <p className="text-yellow-800 font-medium animate-pulse">Fetching latest stories...</p>
+        <p className="text-yellow-800 font-medium animate-pulse">Fetching latest insights...</p>
       </div>
     );
 
@@ -149,7 +149,7 @@ export default function PostsPage() {
             className="inline-flex items-center gap-2 px-5 py-2 mb-6 rounded-full bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-900 text-sm font-black tracking-widest uppercase shadow-lg"
           >
             <div className="w-2 h-2 bg-yellow-700 rounded-full animate-pulse" />
-            Insights & Stories
+            Insights & Resources
           </motion.div>
           
           <motion.h1
