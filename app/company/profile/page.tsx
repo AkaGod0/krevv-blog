@@ -8,7 +8,7 @@ import { useAuth, api } from "@/app/context/AuthContext";
 import {
   Building2, Phone, Edit, Camera, Save, 
   Loader2, CheckCircle, AlertCircle, ChevronLeft, Linkedin, 
-  Twitter, FileText, Link as LinkIcon, User, MapPin
+  Twitter, FileText, Link as LinkIcon, User, MapPin, Mail
 } from "lucide-react";
 
 const industries = ["Technology", "Healthcare", "Finance", "Education", "E-commerce", "Marketing", "Consulting", "Other"];
@@ -93,6 +93,7 @@ export default function CompanyProfilePage() {
       contactPersonRole: formData.contactPersonRole,
       foundedYear: formData.foundedYear ? Number(formData.foundedYear) : undefined,
       logo: logoPreview, 
+      paypalEmail: formData.paypalEmail, // Included here
     };
 
     try {
@@ -213,6 +214,17 @@ export default function CompanyProfilePage() {
                   <FormInput label="Email" value={company?.email || ""} isEditing={false} />
                   <FormInput label="Phone Number" value={formData.phone || ""} isEditing={isEditing} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, phone: e.target.value})} />
                   <FormInput label="Website URL" value={formData.website || ""} isEditing={isEditing} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, website: e.target.value})} />
+                  <div className="col-span-2">
+                    <FormInput 
+                      label="PayPal Email (for Marketplace Payments)" 
+                      value={formData.paypalEmail || ""} 
+                      isEditing={isEditing} 
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, paypalEmail: e.target.value})} 
+                      icon={<Mail size={16} />}
+                      placeholder="email@example.com"
+                    />
+                    <p className="text-xs text-gray-400 mt-2">This email is where you will receive payments from the marketplace.</p>
+                  </div>
                 </>
               )}
 

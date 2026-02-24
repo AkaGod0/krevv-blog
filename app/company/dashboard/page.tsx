@@ -1,36 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, api } from "@/app/context/AuthContext";
 import {
   Building2, Briefcase, Users, Plus, Settings, LogOut, Loader2,
   CheckCircle, Menu, X, Home, PanelLeftClose, PanelLeftOpen,
-  UserPlus
+  UserPlus, ShoppingBag, Zap, MessageCircle, Bell, DollarSign
 } from "lucide-react";
+import { useNotifications } from '@/app/hooks/useNotifications';
 
 export default function CompanyDashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
+  const { unreadCount, unreadMessages, markAsRead } = useNotifications(user?._id);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [recentPostings, setRecentPostings] = useState<any[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showMessageAlert, setShowMessageAlert] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to finish loading
     if (authLoading) return;
 
-    // If not authenticated or not a company, redirect
-    if (!isAuthenticated) {
-      router.push("/company/login");
-      return;
-    }
-
-    // Check if user is a company (has companyName)
-    if (!user?.companyName) {
+    if (!isAuthenticated || !user?.companyName) {
       router.push("/company/login");
       return;
     }
@@ -38,10 +34,61 @@ export default function CompanyDashboardPage() {
     fetchDashboardData();
   }, [authLoading, isAuthenticated, user]);
 
+  // ✅ Show alert when new unread messages arrive
+  useEffect(() => {
+    if (unreadMessages.length > 0) {
+      setShowMessageAlert(true);
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => setShowMessageAlert(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [unreadMessages.length]);
+
   const fetchDashboardData = async () => {
     try {
-      const statsRes = await api.get("/company/dashboard/stats");
-      setStats(statsRes.data.data);
+      const [statsRes, servicesRes] = await Promise.all([
+        api.get("/company/dashboard/stats"),
+        api.get("/marketplace/my-services")
+      ]);
+
+      const marketplaceServices = servicesRes.data || [];
+      
+      // ✅ Fetch orders for each service
+      const ordersPromises = marketplaceServices.map((service: any) =>
+        api.get(`/marketplace/services/${service._id}/orders`)
+          .then(res => res.data || [])
+          .catch(() => [])
+      );
+      
+      const allOrdersArrays = await Promise.all(ordersPromises);
+      const allOrders = allOrdersArrays.flat();
+      
+      // ✅ Count only paid orders (paid, in_progress, delivered, completed)
+      const paidOrders = allOrders.filter((o: any) => 
+        ["paid", "in_progress", "delivered", "completed"].includes(o.status)
+      );
+
+      // Merge Jobs and Services for the "Recent Postings" list
+      const jobs = statsRes.data.data?.recentJobs || [];
+      const services = marketplaceServices.map((s: any) => ({
+        ...s,
+        isService: true,
+        orderCount: allOrders.filter((o: any) => o.serviceId === s._id).length,
+      }));
+
+      const combined = [...jobs, ...services]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+
+      setRecentPostings(combined);
+
+      setStats({
+        ...statsRes.data.data,
+        marketplace: {
+          totalServices: marketplaceServices.length,
+          totalOrders: paidOrders.length,
+        }
+      });
     } catch (err: any) {
       console.error("Error fetching dashboard data:", err);
       if (err.response?.status === 401) {
@@ -52,17 +99,17 @@ export default function CompanyDashboardPage() {
     }
   };
 
-  // Show loading while auth is checking
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-amber-500" size={40} />
-      </div>
-    );
-  }
+  // ✅ Handle clicking on notification - mark as read and navigate
+  const handleNotificationClick = async () => {
+    if (unreadMessages.length > 0) {
+      const firstMessage = unreadMessages[0];
+      await markAsRead(firstMessage.serviceId);
+      router.push(`/marketplace/chat/${firstMessage.serviceId}`);
+      setShowMessageAlert(false);
+    }
+  };
 
-  // If not authenticated after loading, don't render (redirect will happen)
-  if (!isAuthenticated || !user?.companyName) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Loader2 className="animate-spin text-amber-500" size={40} />
@@ -81,12 +128,46 @@ export default function CompanyDashboardPage() {
   return (
     <div className="flex min-h-screen bg-gray-50 overflow-x-hidden">
       
-      {/* Mobile Sidebar Overlay */}
+      {/* ✅ Message Notification Alert */}
+      <AnimatePresence>
+        {showMessageAlert && unreadMessages.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            className="fixed top-4 right-4 z-50 bg-blue-600 text-white rounded-2xl shadow-2xl p-4 max-w-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <MessageCircle size={20} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-sm mb-1">New Message!</h3>
+                <p className="text-xs text-blue-100 line-clamp-1">
+                  {unreadMessages[0].message || 'You have a new message'}
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowMessageAlert(false)}
+                className="text-white/60 hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <button
+              onClick={handleNotificationClick}
+              className="mt-3 w-full py-2 bg-white/20 hover:bg-white/30 text-center rounded-lg text-sm font-semibold transition-colors"
+            >
+              View Chat
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside 
         className={`bg-white shadow-xl z-50 transition-all duration-300 flex flex-col
         ${sidebarOpen ? "fixed inset-y-0 left-0 w-64 translate-x-0" : "fixed inset-y-0 left-0 -translate-x-full lg:relative lg:translate-x-0"} 
@@ -95,7 +176,6 @@ export default function CompanyDashboardPage() {
         <div className="p-4 border-b flex items-center justify-between h-20">
           {!isCollapsed && (
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* Dynamic Logo Container */}
               <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 overflow-hidden border border-amber-100 flex-shrink-0">
                 {user?.companyLogo ? (
                   <img src={user.companyLogo} alt="Logo" className="w-full h-full object-cover" />
@@ -103,34 +183,25 @@ export default function CompanyDashboardPage() {
                   <Building2 size={20}/>
                 )}
               </div>
-              {/* ✅ FIXED: Show actual company name instead of "Krevv" */}
-              <span className="font-bold text-gray-800 truncate" title={user?.companyName}>
-                {user?.companyName}
-              </span>
+              <span className="font-bold text-gray-800 truncate">{user?.companyName}</span>
             </div>
           )}
           {isCollapsed && (
-             <div className="w-10 h-10 mx-auto bg-amber-50 rounded-lg flex items-center justify-center overflow-hidden border border-amber-100">
+             <div className="w-10 h-10 mx-auto bg-amber-50 rounded-lg flex items-center justify-center border border-amber-100">
                 {user?.companyLogo ? <img src={user.companyLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 size={20} className="text-amber-600"/>}
              </div>
           )}
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="hidden lg:block text-gray-400 hover:text-amber-500 ml-2 flex-shrink-0">
+          <button onClick={() => setIsCollapsed(!isCollapsed)} className="hidden lg:block text-gray-400 hover:text-amber-500 ml-2">
             {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
           </button>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500 flex-shrink-0">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500">
             <X size={20} />
           </button>
         </div>
 
         <nav className="flex-1 p-3 space-y-2 mt-4">
           {menuItems.map((item, idx) => (
-            <Link 
-              key={idx} 
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${
-                item.active ? "bg-amber-500 text-white shadow-lg shadow-amber-200" : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
+            <Link key={idx} href={item.href} className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${item.active ? "bg-amber-500 text-white shadow-lg shadow-amber-200" : "text-gray-600 hover:bg-gray-50"}`}>
               <item.icon size={22} className="flex-shrink-0" />
               {!isCollapsed && <span className="font-medium">{item.label}</span>}
             </Link>
@@ -139,99 +210,105 @@ export default function CompanyDashboardPage() {
 
         <div className="p-4 border-t">
           <button onClick={logout} className="flex items-center gap-3 px-3 py-2 text-red-500 w-full hover:bg-red-50 rounded-xl transition-colors">
-            <LogOut size={20} className="flex-shrink-0" />
+            <LogOut size={20} />
             {!isCollapsed && <span className="font-medium">Logout</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b h-20 flex items-center px-6 justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-600">
-                <Menu size={24} />
-            </button>
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-600"><Menu size={24} /></button>
             <h1 className="font-bold text-gray-800 text-sm sm:text-base">Company Portal</h1>
           </div>
           
-          <div className="flex items-center gap-4">
-            <Link href="/company/createjob" className="bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-amber-600 transition-colors hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* ✅ Persistent Notification Bell */}
+            <button 
+              onClick={handleNotificationClick}
+              className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Bell size={20} className="text-gray-600" />
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+                >
+                  {unreadCount}
+                </motion.span>
+              )}
+            </button>
+
+            <Link href="/company/createservice" className="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold text-xs sm:text-sm hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm">
+                <Zap size={16} />
+                <span>Create Service</span>
+            </Link>
+
+            <Link href="/company/createjob" className="bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-xs sm:text-sm hover:bg-amber-600 transition-colors flex items-center gap-2">
                 <Plus size={18} />
                 <span>Post Job</span>
-            </Link>
-            
-            {/* Mobile Post Job Button */}
-            <Link href="/company/createjob" className="sm:hidden bg-amber-500 text-white p-2 rounded-lg hover:bg-amber-600 transition-colors">
-                <Plus size={20} />
-            </Link>
-            
-            {/* Top Right Header Logo/Profile Circle */}
-            <Link href="/company/profile" className="flex items-center gap-2 group">
-                <div className="w-10 h-10 rounded-full border-2 border-amber-100 overflow-hidden bg-gray-50 group-hover:border-amber-500 transition-all flex-shrink-0">
-                    {user?.companyLogo ? (
-                        <img src={user.companyLogo} alt="Company Profile" className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-amber-500"><Building2 size={20}/></div>
-                    )}
-                </div>
             </Link>
           </div>
         </header>
 
         <main className="p-4 sm:p-6 space-y-6 flex-grow">
-          {/* Welcome Banner */}
           <div className="bg-gray-900 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="relative z-10">
                 <h2 className="text-xl sm:text-2xl font-bold">Welcome, {user?.companyName}! 👋</h2>
-                <p className="text-gray-400 text-sm mt-1">Check your latest application updates below.</p>
+                <p className="text-gray-400 text-sm mt-1">Review your jobs and marketplace activity.</p>
             </div>
-            
-            {/* Large Decorative Logo in Banner */}
             {user?.companyLogo && (
-                <div className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl flex-shrink-0">
-                    <img src={user.companyLogo} alt="Company Logo" className="w-full h-full object-cover" />
+                <div className="relative z-10 w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 flex-shrink-0">
+                    <img src={user.companyLogo} alt="Logo" className="w-full h-full object-cover" />
                 </div>
             )}
-            
-            <div className="absolute top-0 right-0 w-32 h-full bg-amber-500/10 skew-x-12 translate-x-10" />
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <StatBox label="Total Jobs" value={stats?.overview?.totalJobs} icon={Briefcase} color="blue" />
-            <StatBox label="Active Jobs" value={stats?.overview?.activeJobs} icon={CheckCircle} color="green" />
+            <StatBox label="Marketplace Services" value={stats?.marketplace?.totalServices} icon={ShoppingBag} color="purple" />
             <StatBox 
-              label="Total Applications" 
-              value={stats?.overview?.totalApplications} 
-              icon={Users} 
+              label="Total Orders" 
+              value={stats?.marketplace?.totalOrders || 0} 
+              icon={DollarSign} 
               color="amber" 
             />
           </div>
 
-          {/* Recent Jobs Table */}
           <div className="bg-white border rounded-2xl overflow-hidden shadow-sm">
             <div className="p-4 border-b font-bold text-gray-700 flex justify-between items-center">
-                <span className="text-sm sm:text-base">Recent Job Posts</span>
+                <span className="text-sm sm:text-base">Recent Postings (Jobs & Services)</span>
                 <Link href="/company/jobs" className="text-xs text-amber-600 hover:underline">View All</Link>
             </div>
             <div className="divide-y">
-              {stats?.recentJobs?.length > 0 ? (
-                stats.recentJobs.map((job: any) => (
-                    <div key={job._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors gap-4">
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-semibold text-gray-800 truncate text-sm sm:text-base">{job.title}</h4>
-                        <p className="text-xs text-gray-500">{job.applicationCount || 0} applications</p>
+              {recentPostings.length > 0 ? (
+                recentPostings.map((item: any) => (
+                    <div key={item._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors gap-4">
+                      <div className="min-w-0 flex-1 flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${item.isService ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
+                          {item.isService ? <ShoppingBag size={16}/> : <Briefcase size={16}/>}
+                        </div>
+                        <div className="truncate">
+                          <h4 className="font-semibold text-gray-800 truncate text-sm sm:text-base">{item.title}</h4>
+                          <p className="text-xs text-gray-500">
+                            {item.isService 
+                              ? `${item.orderCount || 0} orders • Marketplace`
+                              : `${item.applicationCount} applicants • Job`
+                            }
+                          </p>
+                        </div>
                       </div>
-                      <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase flex-shrink-0 ${
-                        job.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                      <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${
+                        item.status === 'active' || item.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {job.status}
+                        {item.status}
                       </span>
                     </div>
                   ))
               ) : (
-                <div className="p-8 text-center text-gray-400 text-sm italic">No recent jobs found.</div>
+                <div className="p-8 text-center text-gray-400 text-sm italic">No recent postings found.</div>
               )}
             </div>
           </div>
@@ -244,15 +321,15 @@ export default function CompanyDashboardPage() {
 function StatBox({ label, value, icon: Icon, color }: any) {
   const colors: any = {
     blue: "bg-blue-50 text-blue-600",
-    green: "bg-green-50 text-green-600",
+    purple: "bg-purple-50 text-purple-600",
     amber: "bg-amber-50 text-amber-600",
   };
   return (
-    <motion.div whileHover={{ y: -2 }} className="bg-white p-4 sm:p-6 rounded-2xl border flex items-center gap-3 sm:gap-4 shadow-sm">
-      <div className={`p-2 sm:p-3 rounded-xl ${colors[color]} flex-shrink-0`}><Icon size={20} className="sm:w-6 sm:h-6" /></div>
-      <div className="min-w-0">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">{label}</p>
-        <p className="text-xl sm:text-2xl font-black text-gray-800">{value || 0}</p>
+    <motion.div whileHover={{ y: -2 }} className="bg-white p-4 sm:p-6 rounded-2xl border flex items-center gap-4 shadow-sm">
+      <div className={`p-3 rounded-xl ${colors[color]}`}><Icon size={24} /></div>
+      <div>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</p>
+        <p className="text-2xl font-black text-gray-800">{value || 0}</p>
       </div>
     </motion.div>
   );

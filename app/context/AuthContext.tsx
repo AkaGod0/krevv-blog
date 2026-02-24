@@ -18,6 +18,8 @@ interface User {
   phone?: string;
   location?: string;
   bio?: string;
+  paypalEmail?: string;       
+  paypalVerified?: boolean;
 }
 
 interface AuthContextType {

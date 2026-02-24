@@ -17,10 +17,11 @@ import {
   Phone,
   Info,
   Building2,
+  LayoutGrid, // Imported for Marketplace
 } from "lucide-react";
 
 export default function Navbar() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -37,6 +38,13 @@ export default function Navbar() {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [mobileMenuOpen, userMenuOpen]);
+
+  const handleMarketplaceClick = (e: React.MouseEvent) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      router.push("/login?redirect=/marketplace");
+    }
+  };
 
   const getDisplayName = () => {
     if (!user) return "";
@@ -83,6 +91,14 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-6">
             <Link href="/" className="text-gray-700 hover:text-amber-600 font-medium transition flex items-center gap-2">
               <Home size={18} /> Home
+            </Link>
+            {/* Added Marketplace */}
+            <Link 
+              href="/marketplace" 
+              onClick={handleMarketplaceClick}
+              className="text-gray-700 hover:text-amber-600 font-medium transition flex items-center gap-2"
+            >
+              <LayoutGrid size={18} /> Marketplace
             </Link>
             <Link href="/jobs" className="text-gray-700 hover:text-amber-600 font-medium transition flex items-center gap-2">
               <Briefcase size={18} /> Jobs
@@ -227,7 +243,6 @@ export default function Navbar() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 py-4 space-y-3">
-              {/* Mobile Navigation Links */}
               <Link
                 href="/"
                 className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-amber-50 rounded-lg transition"
@@ -235,6 +250,19 @@ export default function Navbar() {
               >
                 <Home size={20} />
                 <span className="font-medium">Home</span>
+              </Link>
+
+              {/* Mobile Marketplace */}
+              <Link
+                href="/marketplace"
+                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-amber-50 rounded-lg transition"
+                onClick={(e) => {
+                  handleMarketplaceClick(e);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <LayoutGrid size={20} />
+                <span className="font-medium">Marketplace</span>
               </Link>
 
               <Link

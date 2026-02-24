@@ -14,13 +14,17 @@ import {
   X,
   Loader2,
   CheckCircle,
+  CreditCard,
+  Shield,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import { useAuth, api } from "../context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, refreshUser } = useAuth(); // ✅ Add refreshUser if available
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,10 +33,11 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "", // Keep for display only
+    email: "",
     phone: "",
     location: "",
     bio: "",
+    paypalEmail: "",
   });
 
   useEffect(() => {
@@ -41,6 +46,7 @@ export default function ProfilePage() {
     }
 
     if (user) {
+      console.log("User data loaded:", user); // ✅ Debug log
       setFormData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -48,6 +54,7 @@ export default function ProfilePage() {
         phone: user.phone || "",
         location: user.location || "",
         bio: user.bio || "",
+        paypalEmail: user.paypalEmail || "",
       });
     }
   }, [user, isAuthenticated, authLoading, router]);
@@ -63,26 +70,48 @@ export default function ProfilePage() {
     setError("");
 
     try {
-      // ✅ Only send updatable fields (exclude email)
       const updateData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
         location: formData.location,
         bio: formData.bio,
+        paypalEmail: formData.paypalEmail,
       };
 
-    
+      console.log("Updating profile with:", updateData); // ✅ Debug log
 
-      await api.patch("/users/me", updateData);
+      const response = await api.patch("/users/me", updateData);
+      console.log("Update response:", response.data); // ✅ Debug log
 
       setSuccess(true);
       setEditing(false);
 
-      setTimeout(() => {
+      // ✅ Refresh user data from server instead of reloading page
+      setTimeout(async () => {
         setSuccess(false);
-        window.location.reload();
-      }, 2000);
+        try {
+          const userResponse = await api.get("/users/me");
+          console.log("Refreshed user data:", userResponse.data); // ✅ Debug log
+          
+          // Update form data with fresh user data
+          setFormData({
+            firstName: userResponse.data.firstName || "",
+            lastName: userResponse.data.lastName || "",
+            email: userResponse.data.email || "",
+            phone: userResponse.data.phone || "",
+            location: userResponse.data.location || "",
+            bio: userResponse.data.bio || "",
+            paypalEmail: userResponse.data.paypalEmail || "",
+          });
+          
+          // Reload the page to update auth context
+          window.location.reload();
+        } catch (err) {
+          console.error("Error refreshing user data:", err);
+          window.location.reload();
+        }
+      }, 1500);
     } catch (err: any) {
       console.error("Profile update error:", err);
       console.error("Error details:", err.response?.data);
@@ -103,6 +132,7 @@ export default function ProfilePage() {
         phone: user.phone || "",
         location: user.location || "",
         bio: user.bio || "",
+        paypalEmail: user.paypalEmail || "",
       });
     }
   };
@@ -130,8 +160,8 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="bg-amber-500 rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center text-white text-2xl md:text-3xl font-bold flex-shrink-0">
-          {user.firstName?.[0] || 'U'}
-{user.lastName?.[0] || 'U'}
+                {user.firstName?.[0] || 'U'}
+                {user.lastName?.[0] || 'U'}
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -266,6 +296,7 @@ export default function ProfilePage() {
                     value={formData.phone}
                     onChange={handleChange}
                     disabled={!editing}
+                    placeholder="Enter phone number"
                     className={`w-full pl-10 pr-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg outline-none transition ${
                       editing
                         ? "focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -291,6 +322,7 @@ export default function ProfilePage() {
                     value={formData.location}
                     onChange={handleChange}
                     disabled={!editing}
+                    placeholder="Enter location"
                     className={`w-full pl-10 pr-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg outline-none transition ${
                       editing
                         ? "focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -298,6 +330,78 @@ export default function ProfilePage() {
                     }`}
                   />
                 </div>
+              </div>
+
+              {/* PayPal Email */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <CreditCard size={16} className="text-blue-600" />
+                  PayPal Email
+                  {user.paypalVerified && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                      <CheckCircle size={12} />
+                      Verified
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <Mail
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
+                  <input
+                    type="email"
+                    name="paypalEmail"
+                    value={formData.paypalEmail}
+                    onChange={handleChange}
+                    disabled={!editing}
+                    placeholder="your-paypal@email.com"
+                    className={`w-full pl-10 pr-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg outline-none transition ${
+                      editing
+                        ? "focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                        : "bg-gray-50 cursor-not-allowed"
+                    }`}
+                  />
+                </div>
+                
+                {/* PayPal Info Box */}
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Info size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-blue-800">
+                      <p className="font-semibold mb-1">Required for receiving payments</p>
+                      <p className="text-blue-700 leading-relaxed">
+                        When clients pay you for marketplace services, funds are sent directly to this PayPal account. 
+                        Make sure this matches your PayPal account email exactly.
+                      </p>
+                      {!formData.paypalEmail && (
+                        <p className="mt-2 font-semibold text-amber-700 flex items-center gap-1">
+                          <AlertCircle size={14} />
+                          You cannot request payments until you add your PayPal email
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* PayPal Account Link */}
+                {!formData.paypalEmail && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-800 mb-2 font-semibold">
+                      Don't have a PayPal account?
+                    </p>
+                    <a
+                      href="https://www.paypal.com/us/webapps/mpp/account-selection"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+                    >
+                      <Shield size={14} />
+                      Create PayPal Account (Business or Personal)
+                      <span className="text-gray-500">→</span>
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Bio */}
@@ -316,6 +420,7 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     disabled={!editing}
                     rows={4}
+                    placeholder="Tell us about yourself..."
                     className={`w-full pl-10 pr-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg outline-none transition resize-none ${
                       editing
                         ? "focus:ring-2 focus:ring-amber-500 focus:border-transparent"

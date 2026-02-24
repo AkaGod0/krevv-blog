@@ -236,7 +236,7 @@ export default function AdminDashboard() {
           <Link href="/admin/companies" className="bg-amber-600 text-white p-3 rounded-lg text-center text-sm font-bold hover:bg-amber-700 transition">Manage Companies</Link>
           <Link href="/admin/jobs" className="bg-green-600 text-white p-3 rounded-lg text-center text-sm font-bold hover:bg-green-700 transition">Manage Jobs</Link>
           <Link href="/admin/reports" className="bg-red-600 text-white p-3 rounded-lg text-center text-sm font-bold hover:bg-red-700 transition">Reports</Link>
-          <Link href="/admin/profile" className="bg-purple-600 text-white p-3 rounded-lg text-center text-sm font-bold hover:bg-purple-700 transition">Profile</Link>
+          <Link href="/admin/marketplace" className="bg-indigo-600 text-white p-3 rounded-lg text-center text-sm font-bold hover:bg-indigo-700 transition">Marketplace</Link>
         </div>
       </motion.div>
     </div>

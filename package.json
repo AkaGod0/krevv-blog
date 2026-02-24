@@ -22,6 +22,7 @@
     "@ckeditor/ckeditor5-react": "^11.0.0",
     "@ckeditor/ckeditor5-upload": "^47.2.0",
     "@heroicons/react": "^2.2.0",
+    "@paypal/react-paypal-js": "^8.9.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tiptap/extension-bubble-menu": "^3.14.0",
     "@tiptap/extension-bullet-list": "^3.11.0",
@@ -55,7 +56,8 @@
     "novel": "^1.0.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -67,7 +69,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
-    "baseline-browser-mapping": "^2.9.15",
+    "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "postcss": "^8.5.6",
